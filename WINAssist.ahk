@@ -11,6 +11,9 @@
 #Include include/URLDownloadToVar.ahk
 #Include include/json.ahk
 #Include include/convertCodepage.ahk
+#Include include/imagelib.ahk
+;ClipJump
+#include include/gdiplus.ahk
 #SingleInstance,Force
 #Persistent
 
@@ -580,11 +583,36 @@ if_on_top=0
 thundernum=0
 
 
+IfNotExist,%A_ScriptDir%\%applicationname%.ini
+{
+	tooltip,Not exist %A_ScriptDir%%applicationname%.ini
+	sleep 1000
+	tooltip 
+	ExitApp
+}
 IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
 ; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
 IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
 
 ;*******************************  read setting file  *******************************{{{
+	
+;#★★General★
+IniRead, version, %A_ScriptDir%\%applicationname%.ini, General,version
+IniRead, updatefile, %A_ScriptDir%\%applicationname%.ini, General,updatefile
+IniRead, productpage, %A_ScriptDir%\%applicationname%.ini, General,productpage
+IniRead, myblog, %A_ScriptDir%\%applicationname%.ini, General,blog
+
+;#★★Clipjump★
+; Clipboard = 
+
+IniRead,maxclips,%A_ScriptDir%%applicationname%.ini,Clipjump,Minimum_No_Of_Clips_to_be_Active
+IniRead,threshold,%A_ScriptDir%%applicationname%.ini,Clipjump,Threshold
+IniRead,ismessage,%A_ScriptDir%%applicationname%.ini,Clipjump,Show_Copy_Message
+IniRead,quality,%A_ScriptDir%%applicationname%.ini,Clipjump,Quality_of_Thumbnail_Previews
+IniRead,keepsession,%A_ScriptDir%%applicationname%.ini,Clipjump,Keep_Session
+IniRead,R_lf,%A_ScriptDir%%applicationname%.ini,Clipjump,Remove_Ending_Linefeeds
+Iniread,generalsleep,%A_ScriptDir%%applicationname%.ini,Clipjump,Wait_Key
+
 ;#★★★快捷键开关★★★
 IniRead, BlackList, %A_ScriptDir%\%applicationname%.ini, FnSwitch,BlackList
 IniRead, Fn0113_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0113
@@ -750,6 +778,7 @@ GroupAdd, WinGroup, ahk_class WorkerW ;桌面
 GroupAdd, WinGroup, ahk_class ExploreWClass ;我的电脑
 GroupAdd, WinGroup, ahk_class CabinetWClass  ;我的电脑
 
+
 ;迅雷、快车、旋风地址转换为普通地址
 Chars=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
 ;screenlock 白领们的小助手：老板键、视力保护、锁屏三合一软件
@@ -769,11 +798,86 @@ Gosub, setLang
 
 SetTimer,CheckIdle,60000
 
+	
 Gosub, makeMenu
 if ( direct_lock = 1 )
 {
    Gosub, start
 }
+
+
+; Clipjump begin
+
+IfEqual,maxclips
+	maxclips = 9999999
+if maxclips is not integer
+	maxclips = 20
+If threshold is not integer
+	threshold = 10
+IfEqual,ismessage,0
+	CopyMessage = 
+else
+	CopyMessage = Transfered to ClipJump
+If quality is not Integer
+	quality = 20
+if keepsession is not integer
+	keepsession = 1
+if (R_lf == 0)
+	R_lf := false
+else
+	R_lf := true
+
+if generalsleep is not Integer
+	generalsleep := 200
+
+IfLess,generalsleep,200
+	generalsleep := 200
+
+IfEqual,keepsession,0
+	gosub, cleardata
+
+totalclips := Threshold + maxclips
+
+loop,
+{
+IfNotExist,cache/Clips/%a_index%.avc
+{
+	cursave := a_index - 1
+	tempsave := cursave
+	break
+}
+}
+
+; Gui
+Gui, 15: +LastFound +AlwaysOnTop -Caption +ToolWindow
+gui, 15: add, picture,x0 y0 w400 h300 vimagepreview,
+
+
+IfExist,%a_startup%/WINAssist.lnk
+{
+FileDelete,%a_startup%/WINAssist.lnk
+FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk,%a_scriptdir%/
+Menu,Tray,Check,开机启动
+}
+
+FileCreateDir,cache
+FileCreateDir,cache/clips
+FileCreateDir,cache/thumbs
+FileCreateDir,cache/fixate
+FileSetAttrib,+H,%a_scriptdir%\cache
+
+scrnhgt := A_ScreenHeight / 2.5
+scrnwdt := A_ScreenWidth / 2
+
+caller := true
+in_back := false
+
+Hotkey,$^v,Paste,On
+Hotkey,$^c,NativeCopy,On
+Hotkey,$^x,NativeCut,On
+Hotkey,^!c,CopyFile,On
+Hotkey,^!x,CopyFolder,On
+; Clipjump end
 
 ;虚拟桌面
 ; ***** initialization *****
@@ -1018,7 +1122,9 @@ Menu, AHK_Edit, add, 脚本, edit_script
 Menu, AHK_Edit, add, 配置文件, edit_config
 Menu, Tray, Add, 编辑(&E), :AHK_Edit
 Menu, Tray, Add, 重启(&R), Tray_Reload
-;Menu, tray, add, 关于(&A), About
+Menu, Tray, Add, 更新(&U), update
+Menu, tray, add, 关于(&A), About
+Menu,Tray,Add,开机启动,startup
 Menu, tray, add, 退出(&X), exitIT
 return
 
@@ -1182,7 +1288,74 @@ Reload
 Return
 
 About:
-MsgBox, WINAssist Ver 1.01 
+Gui, 16:Font, S18 CRed, Consolas
+Gui, 16:Add, Text, x2 y0 w550 h40 +Center gupdate, WINAssist v%version%
+Gui, 16:Font, S14 CBlue, Verdana
+Gui, 16:Add, Text, x2 y40 w550 h30 +Center gblog, howiefh
+Gui, 16:Font, S16 CBlack, Verdana
+Gui, 16:Font, S14 CBlack, Verdana
+Gui, 16:Add, Text, x2 y70 w550 h30 +Center, Assist for Windows
+Gui, 16:Font, S14 CBlack, Verdana
+Gui, 16:Font, S14 CRed, Verdana
+Gui, 16:Add, Text, x2 y120 w100 h30 , Thanks
+Gui, 16:Font, S14 CBlue Bold,Consolas
+Gui, 16:Add, Text, x2 y150 w550 h90 , Song Ruihua for his HK4WIN.`nAvi Aryan for his ClipJump.`n
+Gui, 16:Font, S14 CBlack Bold, Verdana
+Gui, 16:Add, Text, x2 y260 w300 h30 ginstallationopen, Open Offline Help
+Gui, 16:Font, S14 CBlack, Verdana
+Gui, 16:Add, Text, x-8 y330 w560 h24 +Center, Copyright (C) 2013
+Gui, 16:Show, x416 y126 h354 w557, WINAssist v%version%
+return
+
+;***************Extra Functions and Labels**********************************************************************
+help:
+IfExist, %a_programfiles%/Internet Explorer/iexplore.exe
+	Run, iexplore.exe "http://avi-win-tips.blogspot.com/2013/04/clipjump-online-guide.html"
+else
+	Run, http://avi-win-tips.blogspot.com/2013/04/clipjump-online-guide.html
+return
+
+startup:
+Menu,Tray,Togglecheck,开机启动
+IfExist, %a_startup%/WINAssist.lnk
+	FileDelete,%a_startup%/WINAssist.lnk
+else
+	FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk, %a_scriptdir%/
+return
+
+update:
+URLDownloadToFile,%updatefile%,%a_scriptdir%/cache/latestversion.txt
+FileRead,latestversion,%a_scriptdir%/cache/latestversion.txt
+IfGreater,latestversion,%version%
+{
+MsgBox, 48, Update Avaiable, Your Version = %version%         `nCurrent Version = %latestversion%       `n`nGo to Website
+IfMsgBox OK
+{
+	IfExist, %a_programfiles%/Internet Explorer/iexplore.exe
+		run, iexplore.exe "%productpage%"
+	else
+		run, %productpage%
+}
+}
+else
+	MsgBox, 64, ClipJump, No Updates Available
+return
+
+installationopen:
+run, %a_scriptdir%/help.htm
+return
+
+blog:
+IfExist, %a_programfiles%/Internet Explorer/iexplore.exe
+	run, iexplore.exe %myblog%
+else
+	run, %myblog%
+return
+
+16GuiEscape:
+16GuiClose:
+Gui, 16:hide
+EmptyMem()
 return
 
 ;虚拟桌面
@@ -1395,6 +1568,7 @@ SHOW_FILES:
 
 ;HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH   隐藏文件   结束   HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ;
 	
+
 ;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn  新建文件夹  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn 
 #If (FnSwitch(0118)=1)
 $#n::
@@ -1864,7 +2038,7 @@ Gui, 3:Destroy
 Gui, 3:font,, Arial
 Gui, 3:font,,微软雅黑
 Gui, 3:Add, Edit, x3 y3 w300 h77 +Multi +Wrap Vurl,
-Gui, 3:Add, Button, x306 y3 w24 h37 Gpaste, 粘贴
+Gui, 3:Add, Button, x306 y3 w24 h37 Gconvert_paste, 粘贴
 Gui, 3:Add, Button, x306 y43 w24 h37 Gcopy, 复制
 Gui, 3:Add, Button, x3 y83 w90 h30 Gdo, 转换
 Gui, 3:Add, Button, x99 y83 w90 h30 Gabout_3, 关于
@@ -1900,7 +2074,7 @@ Gui 3:+OwnDialogs
 msgbox,,By DieJian,支持(迅雷,快车,旋风,rayfile)
 return
 
-paste:
+convert_paste:
 decodeurl:=Clipbard
 GuiControl,3:, url, %decodeurl%
 return
@@ -5366,6 +5540,511 @@ InitHIconStruct()
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Clipjump begin;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+paste:
+gui, 15: hide
+caller := false
+if (in_back)
+{
+in_back := false
+If (tempsave == 1)
+	tempsave := cursave
+else
+	tempsave-=1
+}
+IfNotExist,cache/clips/%tempsave%.avc
+{
+	Tooltip, No Clip Exists
+	sleep, 700
+	Tooltip
+	Reload
+}
+else
+{
+Hotkey,^c,MoveBack,On
+Hotkey,^x,Cancel,On
+Hotkey,^Space,Fixate,On
+Hotkey,^S,Ssuspnd,On
+
+fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%tempsave%.avc
+gosub, fixcheck
+realclipno := cursave - tempsave + 1
+ifequal,clipboard
+{
+	Tooltip, Clip %realclipno% of %cursave% %fixstatus%
+	gosub, showpreview
+	settimer,ctrlcheck,50
+}
+else
+{
+	length := strlen(Clipboard)
+	IfGreater,length,200
+	{
+		StringLeft,halfclip,Clipboard, 200
+		halfclip := halfclip . "                      >>>>  .............More"
+	}
+	else
+		halfclip := Clipboard
+	ToolTip, Clip %realclipno% of %cursave% %fixstatus%`n%halfclip%
+	settimer,ctrlcheck,50
+}
+realactive := tempsave
+tempsave-=1
+If (tempsave == 0)
+	tempsave := cursave
+}
+return
+
+OnClipboardChange:
+Critical
+If (caller)
+{
+errlvl := ErrorLevel
+gosub, clipchange
+}
+return
+
+clipchange:
+tempclipall := ClipboardAll
+If (clipboard != "" or tempclipall != "")
+{
+If errlvl = 1
+{
+	IfNotEqual,Clipboard,%lastclip%
+	{
+	cursave+=1
+	gosub, clipsaver
+	LastClip := Clipboard
+	Tooltip, %CopyMessage%
+	tempsave := cursave
+	IfEqual,cursave,%totalclips%
+		gosub,compacter
+	}
+}
+If errlvl = 2
+{
+	cursave+=1
+	Tooltip, %CopyMessage%
+	tempsave := cursave
+	LastClip := 
+	gosub, thumbgenerator
+	gosub, clipsaver
+	IfEqual,cursave,%totalclips%
+		gosub, compacter
+}
+tempclipall = 
+sleep, 500
+Tooltip
+
+EmptyMem()
+}
+return
+
+MoveBack:
+gui, 15: hide
+in_back := true
+tempsave := realactive + 1
+IfEqual,realactive,%cursave%
+	tempsave := 1
+realactive := tempsave
+fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%tempsave%.avc
+gosub, fixcheck
+realclipno := cursave - tempsave + 1
+ifequal,clipboard
+{
+	Tooltip, Clip %realclipno% of %cursave% %fixstatus%`n
+	gosub, showpreview
+	settimer,ctrlcheck,50
+}
+else
+{
+	StringLeft,halfclip,Clipboard,200
+	ToolTip, Clip %realclipno% of %cursave% %fixstatus%`n%halfclip%
+	settimer,ctrlcheck,50
+}
+return
+
+Cancel:
+gui, 15: hide
+ToolTip, Cancel Paste Operation`nRelease Control to Confirm
+ctrlref = cancel
+Hotkey,^Space,fixate,Off
+Hotkey,^S,Ssuspnd,Off
+Hotkey,^x,Cancel,Off
+Hotkey,^x,Delete,On
+return
+
+Delete:
+ToolTip, Delete the current clip`nRelease Control to Confirm`nPress X Again to Delete All Clips.
+ctrlref = delete
+Hotkey,^x,Delete,Off
+Hotkey,^x,DeleTEall,On
+return
+
+Deleteall:
+Tooltip, Delete all Clips`nRelease Control to Confirm`nPress X Again to Cancel
+ctrlref = deleteall
+Hotkey,^x,DeleteAll,Off
+Hotkey,^x,Cancel,On
+return
+
+NativeCopy:
+Critical
+Hotkey,$^c,NativeCopy,Off
+Hotkey,$^c,Blocker,On
+Send, ^c
+setTimer,CtrlforCopy,50
+gosub, CtrlforCopy
+return
+
+NativeCut:
+Critical
+Hotkey,$^x,NativeCut,Off
+Hotkey,$^x,Blocker,On
+Send, ^x
+setTimer,CtrlforCopy,50
+gosub, CtrlforCopy
+return
+
+CtrlForCopy:
+GetKeyState,Ctrlstate,ctrl
+if ctrlstate = u
+{
+Hotkey,$^c,NativeCopy,on
+Hotkey,$^x,NativeCut,on
+setTimer,CtrlforCopy,Off
+}
+return
+
+Blocker:
+return
+
+Fixate:
+IfExist,cache\fixate\%realactive%.fxt
+{
+	fixstatus := ""
+	FileDelete,%A_ScriptDir%\cache\fixate\%realactive%.fxt
+}
+else
+{
+	fixstatus := "[FIXED]"
+	FileAppend,,%A_ScriptDir%\cache\fixate\%realactive%.fxt
+}
+IfEqual,clipboard
+	Tooltip, Clip %realclipno% of %cursave% %fixstatus%`n
+else
+	ToolTip, Clip %realclipno% of %cursave% %fixstatus%`n%halfclip%
+return
+
+clipsaver:
+fileappend,%ClipboardAll%,cache/clips/%cursave%.avc
+loop,%cursave%
+{
+tempno := cursave - a_index + 1
+IfExist,cache\fixate\%tempno%.fxt
+{
+	t_tempno := tempno + 1
+	FileMove,cache\clips\%t_tempno%.avc,cache\clips\%t_tempno%_a.avc
+	FileMove,cache\clips\%tempno%.avc,cache\clips\%t_tempno%.avc
+	FileMove,cache\clips\%t_tempno%_a.avc,cache\clips\%tempno%.avc
+	IfExist,cache\thumbs\%tempno%.jpg
+	{
+		FileMove,cache\thumbs\%t_tempno%.jpg,cache\thumbs\%t_tempno%_a.jpg
+		FileMove,cache\thumbs\%tempno%.jpg,cache\thumbs\%t_tempno%.jpg
+		FileMove,cache\thumbs\%t_tempno%_a.jpg,cache\thumbs\%tempno%.jpg
+	}
+	FileMove,cache\fixate\%tempno%.fxt,cache\fixate\%t_tempno%.fxt
+}
+}
+t_tempno =
+tempno = 
+return
+
+fixcheck:
+IfExist,cache\fixate\%tempsave%.fxt
+	fixstatus := "[FIXED]"
+else
+	fixstatus := ""
+return
+
+ctrlcheck:
+GetKeyState,ctrlstate,ctrl
+if ctrlstate=u
+{
+caller := false
+gui, 15: hide
+IfEqual,ctrlref,cancel
+{
+	ToolTip, Cancelled
+	tempsave := cursave
+}
+	else IfEqual,ctrlref,deleteall
+	{
+		Tooltip,Everything Deleted
+		gosub, cleardata
+	}
+	else IfEqual,ctrlref,delete
+		{
+			Tooltip,Deleted
+			gosub, clearclip
+		}
+		else
+		{
+			Tooltip, Pasting...
+			if (R_lf)
+			{
+			if (Substr(Clipboard,-1) == "`r`n")
+			{
+				CopyMessage = 
+				StringTrimRight,Clipboard,clipboard,2
+				Send, ^v
+				sleep, %generalsleep%
+				Loop
+					IfExist,cache\clips\%cursave%.avc
+						break
+				CopyMessage = Transfered to ClipJump
+			}
+			else
+			{
+				If (Substr(Clipboard,-11) == "   --[PATH][")
+				{
+					StringTrimRight,tempclip,Clipboard,12
+					SendInput {RAW} %tempclip%
+				}
+				else
+				{
+				CopyMessage = 
+				Send, ^v
+				sleep, %generalsleep%
+				Loop
+					IfExist,cache\clips\%cursave%.avc
+						break
+				CopyMessage = Transfered to ClipJump
+				}
+			}
+			}
+			else
+			{
+			If (Substr(Clipboard,-11) == "   --[PATH][")
+				{
+				StringTrimRight,tempclip,Clipboard,12
+				SendInput {RAW} %tempclip%
+				}
+				else
+				{
+				CopyMessage = 
+				Send, ^v
+				sleep, %generalsleep%
+				Loop
+					IfExist,cache\clips\%cursave%.avc
+						break
+				CopyMessage = Transfered to ClipJump
+				}
+			}
+			tempsave := realactive
+		}
+SetTimer,ctrlcheck,Off
+caller := true
+in_back := false
+tempclip = 
+ctrlref = 
+sleep, 700
+Tooltip
+Hotkey,^S,Ssuspnd,Off
+Hotkey,^c,MoveBack,Off
+Hotkey,^x,Cancel,Off
+Hotkey,^Space,Fixate,Off
+Hotkey,^x,Deleteall,Off
+Hotkey,^x,Delete,Off
+;;
+Hotkey,$^c,NativeCopy,On
+Hotkey,$^x,NativeCut,On
+;;
+EmptyMem()
+}
+return
+
+Ssuspnd:
+SetTimer,ctrlcheck,Off
+ctrlref = 
+tempsave := realactive
+Hotkey,^c,MoveBack,Off
+Hotkey,^x,Cancel,Off
+Hotkey,^Space,Fixate,Off
+Hotkey,^x,Deleteall,Off
+Hotkey,^x,Delete,Off
+Hotkey,^S,Ssuspnd,Off
+;;
+Hotkey,$^c,NativeCopy,On
+Hotkey,$^x,NativeCut,On
+;;
+in_back := false
+caller := false
+addtowinclip(realactive, "has Clip " . realclipno)
+caller := true
+Gui, 15: hide
+return
+
+compacter:
+loop, %threshold%
+{
+	FileDelete,%A_ScriptDir%\cache\clips\%a_index%.avc
+	FileDelete,%A_ScriptDir%\cache\thumbs\%a_index%.jpg
+	FileDelete,%A_ScriptDir%\cache\fixate\%a_index%.fxt
+}
+loop, %maxclips%
+{
+	avcnumber := a_index + threshold
+	FileMove,%a_scriptdir%/cache/clips/%avcnumber%.avc,%A_ScriptDir%/cache/clips/%a_index%.avc
+	filemove,%a_scriptdir%/cache/thumbs/%avcnumber%.jpg,%a_scriptdir%/cache/thumbs/%a_index%.jpg
+	filemove,%a_scriptdir%/cache/fixate/%avcnumber%.fxt,%a_scriptdir%/cache/fixate/%a_index%.fxt
+}
+cursave := maxclips
+tempsave := cursave
+return
+
+cleardata:
+LastClip := 
+FileDelete,cache\clips\*.avc
+FileDelete,cache\thumbs\*.jpg
+FileDelete,cache\fixate\*.fxt
+cursave := 0
+tempsave := 0
+return
+
+clearclip:
+LastClip := 
+FileDelete,cache\clips\%realactive%.avc
+FileDelete,cache\thumbs\%realactive%.jpg
+FileDelete,cache\fixate\%realactive%.fxt
+tempsave := realactive - 1
+if (tempsave == 0)
+	tempsave := 1
+gosub, renamecorrect
+cursave-=1
+return
+
+renamecorrect:
+looptime := cursave - realactive
+If (looptime != 0)
+{
+loop,%looptime%
+{
+	newname := realactive
+	realactive+=1
+	FileMove,cache/clips/%realactive%.avc,cache/clips/%newname%.avc
+	FileMove,cache/thumbs/%realactive%.jpg,cache/thumbs/%newname%.jpg
+	FileMove,cache/fixate/%realactive%.fxt,cache/fixate/%newname%.fxt
+}
+}
+return
+
+thumbgenerator:
+ClipWait,,1
+Convert(0, A_ScriptDir . "\cache\thumbs\" . cursave . ".jpg", quality)
+return
+
+showpreview:
+GDIPToken := Gdip_Startup()
+pBM := Gdip_CreateBitmapFromFile( A_ScriptDir . "\cache\thumbs\" . tempsave . ".jpg" )
+widthofthumb := Gdip_GetImageWidth( pBM )
+heightofthumb := Gdip_GetImageHeight( pBM )  
+Gdip_DisposeImage( pBM )                                         
+Gdip_Shutdown( GDIPToken )
+
+IfGreater,heightofthumb,%scrnhgt%
+	displayh := heightofthumb / 2
+else
+	displayh := heightofthumb
+IfGreater,widthofthumb,%scrnwdt%
+	displayw := widthofthumb / 2
+else
+	displayw := widthofthumb
+
+GuiControl, 15:,imagepreview,*w%displayw% *h%displayh% cache\thumbs\%tempsave%.jpg
+MouseGetPos,ax,ay
+ay := ay + (scrnhgt / 8)
+Gui, 15:Show, x%ax% y%ay% h%displayh% w%displayw%
+return
+
+;****************COPY FILE/FOLDER******************************************************************************
+
+copyfile:
+CopyMessage = File Path(s) copied to Clipjump
+selectedfile := GetFile()
+IfNotEqual,selectedfile
+	Clipboard := selectedfile . "   --[PATH]["
+sleep, %generalsleep%
+CopyMessage = Transfered to Clipjump
+return
+
+copyfolder:
+CopyMessage = Active Folder Path copied to Clipjump
+openedfolder := GetFolder()
+IfNotEqual,openedfolder
+	Clipboard := openedfolder . "   --[PATH]["
+sleep, %generalsleep%
+Copymessage = Transfered to Clipjump
+return
+
+
+;******FUNCTIONS*************************************************
+
+addtowinclip(lastentry, extratip)
+{
+ToolTip, Windows Clipboard %extratip%
+IfNotEqual,cursave,0
+	fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%lastentry%.avc
+
+IF (Substr(Clipboard,-11) == "   --[PATH][")
+	StringTrimRight,Clipboard,Clipboard,12
+sleep, 1000
+ToolTip
+}
+; EmptyMem()
+; {
+; return, dllcall("psapi.dll\EmptyWorkingSet", "UInt", -1)
+; }
+
+GetFile(hwnd="")
+{
+	hwnd := hwnd ? hwnd : WinExist("A")
+	WinGetClass class, ahk_id %hwnd%
+	if (class="CabinetWClass" or class="ExploreWClass" or class="Progman")
+		for window in ComObjCreate("Shell.Application").Windows
+			if (window.hwnd==hwnd)
+    sel := window.Document.SelectedItems
+	for item in sel
+	ToReturn .= item.path "`n"
+	return Trim(ToReturn,"`n")
+}
+
+GetFolder()
+{
+WinGetClass,var,A
+If var in CabinetWClass,ExplorerWClass,Progman
+{
+IfEqual,var,Progman
+	v := A_Desktop
+else
+{
+winGetText,Fullpath,A
+loop,parse,Fullpath,`r`n
+{
+IfInString,A_LoopField,:\
+{
+StringGetPos,pos,A_Loopfield,:\,L
+Stringtrimleft,v,A_loopfield,(pos - 1)
+break
+}
+}
+}
+return, v
+}
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;Clipjump end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 f_ShowMenuX:
 Menu, THISISASECRETMENU, Show
 return
