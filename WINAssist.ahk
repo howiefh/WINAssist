@@ -11,10 +11,11 @@
 #Include include/URLDownloadToVar.ahk
 #Include include/json.ahk
 #Include include/convertCodepage.ahk
-#Include include/imagelib.ahk
 ;ClipJump
+#Include include/imagelib.ahk
 #include include/gdiplus.ahk
 #SingleInstance,Force
+
 #Persistent
 
 HDDMtitle = Drives Leds 
@@ -585,7 +586,7 @@ thundernum=0
 
 IfNotExist,%A_ScriptDir%\%applicationname%.ini
 {
-	tooltip,Not exist %A_ScriptDir%%applicationname%.ini
+	tooltip,Not exist %A_ScriptDir%\%applicationname%.ini
 	sleep 1000
 	tooltip 
 	ExitApp
@@ -602,16 +603,6 @@ IniRead, updatefile, %A_ScriptDir%\%applicationname%.ini, General,updatefile
 IniRead, productpage, %A_ScriptDir%\%applicationname%.ini, General,productpage
 IniRead, myblog, %A_ScriptDir%\%applicationname%.ini, General,blog
 
-;#★★Clipjump★
-; Clipboard = 
-
-IniRead,maxclips,%A_ScriptDir%%applicationname%.ini,Clipjump,Minimum_No_Of_Clips_to_be_Active
-IniRead,threshold,%A_ScriptDir%%applicationname%.ini,Clipjump,Threshold
-IniRead,ismessage,%A_ScriptDir%%applicationname%.ini,Clipjump,Show_Copy_Message
-IniRead,quality,%A_ScriptDir%%applicationname%.ini,Clipjump,Quality_of_Thumbnail_Previews
-IniRead,keepsession,%A_ScriptDir%%applicationname%.ini,Clipjump,Keep_Session
-IniRead,R_lf,%A_ScriptDir%%applicationname%.ini,Clipjump,Remove_Ending_Linefeeds
-Iniread,generalsleep,%A_ScriptDir%%applicationname%.ini,Clipjump,Wait_Key
 
 ;#★★★快捷键开关★★★
 IniRead, BlackList, %A_ScriptDir%\%applicationname%.ini, FnSwitch,BlackList
@@ -643,6 +634,22 @@ IniRead, Fn0561_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0561
 IniRead, Fn0562_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0562
 IniRead, Fn0563_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0563
 IniRead, Fn0564_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0564
+IniRead, Fn0565_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0565
+
+;#★★Clipjump★
+; Clipboard = 
+
+If (FnSwitch(0565)=1)
+{
+IniRead,maxclips,%A_ScriptDir%\%applicationname%.ini,Clipjump,Minimum_No_Of_Clips_to_be_Active
+IniRead,threshold,%A_ScriptDir%\%applicationname%.ini,Clipjump,Threshold
+IniRead,ismessage,%A_ScriptDir%\%applicationname%.ini,Clipjump,Show_Copy_Message
+IniRead,quality,%A_ScriptDir%\%applicationname%.ini,Clipjump,Quality_of_Thumbnail_Previews
+IniRead,keepsession,%A_ScriptDir%\%applicationname%.ini,Clipjump,Keep_Session
+IniRead,R_lf,%A_ScriptDir%\%applicationname%.ini,Clipjump,Remove_Ending_Linefeeds
+Iniread,generalsleep,%A_ScriptDir%\%applicationname%.ini,Clipjump,Wait_Key
+Iniread,lastclip,%A_ScriptDir%\%applicationname%.ini,Clipjump,lastclip
+}
 
 ;#★★★鼠标手势★★★
 IniRead, IE_Gesture_Back, %A_ScriptDir%\%applicationname%.ini, Gesture,IE_Gesture_Back
@@ -730,21 +737,21 @@ IniRead, if_fullscreen, %A_ScriptDir%\%applicationname%.ini, lock, if_fullscreen
 IniRead, worktime, %A_ScriptDir%\%applicationname%.ini, lock, worktime, 45    ;工作45分钟后强制休息
 IniRead, relaxtime, %A_ScriptDir%\%applicationname%.ini, lock, relaxtime, 3       ;眼睛放松时间或者叫强制休息时间
 IniRead, hidewindow, %A_ScriptDir%\%applicationname%.ini, lock, hidewindow
-IniRead, hotkey, %applicationname%.ini, lock, hotkey, #k
-IniRead, language, %applicationname%.ini, lock, language, 0
+IniRead, hotkey,%a_scriptdir%\%applicationname%.ini, lock, hotkey, #k
+IniRead, language,%a_scriptdir%\%applicationname%.ini, lock, language, 0
 
 ;读取任务列表
 /*
-IniRead, todolist_0, %A_ScriptDir%%applicationname%.ini, todolist, todolist_0
-IniRead, todolist_1, %A_ScriptDir%%applicationname%.ini, todolist, todolist_1
-IniRead, todolist_2, %A_ScriptDir%%applicationname%.ini, todolist, todolist_2
-IniRead, todolist_3, %A_ScriptDir%%applicationname%.ini, todolist, todolist_3
-IniRead, todolist_4, %A_ScriptDir%%applicationname%.ini, todolist, todolist_4
-IniRead, todolist_5, %A_ScriptDir%%applicationname%.ini, todolist, todolist_5
-IniRead, todolist_6, %A_ScriptDir%%applicationname%.ini, todolist, todolist_6
-IniRead, todolist_7, %A_ScriptDir%%applicationname%.ini, todolist, todolist_7
-IniRead, todolist_8, %A_ScriptDir%%applicationname%.ini, todolist, todolist_8
-IniRead, todolist_9, %A_ScriptDir%%applicationname%.ini, todolist, todolist_9
+IniRead, todolist_0, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_0
+IniRead, todolist_1, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_1
+IniRead, todolist_2, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_2
+IniRead, todolist_3, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_3
+IniRead, todolist_4, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_4
+IniRead, todolist_5, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_5
+IniRead, todolist_6, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_6
+IniRead, todolist_7, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_7
+IniRead, todolist_8, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_8
+IniRead, todolist_9, %A_ScriptDir%\%applicationname%.ini, todolist, todolist_9
 */
 ;*******************************  read setting file  *******************************}}}
 ;--------------------------------------------------------
@@ -808,6 +815,8 @@ if ( direct_lock = 1 )
 
 ; Clipjump begin
 
+If (FnSwitch(0565)=1)
+{
 IfEqual,maxclips
 	maxclips = 9999999
 if maxclips is not integer
@@ -857,7 +866,7 @@ IfExist,%a_startup%/WINAssist.lnk
 {
 FileDelete,%a_startup%/WINAssist.lnk
 FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk,%a_scriptdir%/
-Menu,Tray,Check,开机启动
+Menu,more,Check,开机启动
 }
 
 FileCreateDir,cache
@@ -877,6 +886,7 @@ Hotkey,$^c,NativeCopy,On
 Hotkey,$^x,NativeCut,On
 Hotkey,^!c,CopyFile,On
 Hotkey,^!x,CopyFolder,On
+}
 ; Clipjump end
 
 ;虚拟桌面
@@ -1116,15 +1126,22 @@ Menu, tool, Add, 定时关机, start_shutdown
 Menu, tray, Add, 功能, :tool  ;必须在后
 gosub,makescreenlockmenu
 GoSub makeWeatherMenu
+
+If (FnSwitch(0565)=1)
+{
+GoSub makeClipJumpMenu
+}
 ;子菜单
 Menu, tray, add ; 创建分割线。
-Menu, AHK_Edit, add, 脚本, edit_script
-Menu, AHK_Edit, add, 配置文件, edit_config
-Menu, Tray, Add, 编辑(&E), :AHK_Edit
+Menu, more, add, 编辑脚本, edit_script
+Menu, more, add, 编辑配置文件, edit_config
+; Menu, Tray, Add, 编辑(&E), :AHK_Edit
+Menu, more, add, 帮助(&H), installationopen
+Menu, more, Add, 更新(&U), update
+Menu, more, add, 关于(&A), About
+Menu,more,Add,开机启动,startup
+Menu, tray, add, 更多, :more
 Menu, Tray, Add, 重启(&R), Tray_Reload
-Menu, Tray, Add, 更新(&U), update
-Menu, tray, add, 关于(&A), About
-Menu,Tray,Add,开机启动,startup
 Menu, tray, add, 退出(&X), exitIT
 return
 
@@ -1274,6 +1291,12 @@ if(FnSwitch(0564)=1)
 Menu, PCMeter, Add,show Window,  TogglePCMeter
 Menu, tray, add, PCMeter, :PCMeter
 return
+
+
+makeClipJumpMenu:
+Menu, ClipJump, Add, 清空缓存, cleardata
+menu, tray , add , 剪贴板,:ClipJump
+return
  
 Tray_Show:
 Menu, Tray, Show
@@ -1284,6 +1307,10 @@ ExitApp
 return
 
 Tray_Reload:
+If (FnSwitch(0565)=1)
+{
+IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+}
 Reload
 Return
 
@@ -1307,16 +1334,8 @@ Gui, 16:Add, Text, x-8 y330 w560 h24 +Center, Copyright (C) 2013
 Gui, 16:Show, x416 y126 h354 w557, WINAssist v%version%
 return
 
-;***************Extra Functions and Labels**********************************************************************
-help:
-IfExist, %a_programfiles%/Internet Explorer/iexplore.exe
-	Run, iexplore.exe "http://avi-win-tips.blogspot.com/2013/04/clipjump-online-guide.html"
-else
-	Run, http://avi-win-tips.blogspot.com/2013/04/clipjump-online-guide.html
-return
-
 startup:
-Menu,Tray,Togglecheck,开机启动
+Menu,more,Togglecheck,开机启动
 IfExist, %a_startup%/WINAssist.lnk
 	FileDelete,%a_startup%/WINAssist.lnk
 else
@@ -1338,7 +1357,7 @@ IfMsgBox OK
 }
 }
 else
-	MsgBox, 64, ClipJump, No Updates Available
+	MsgBox, 64, WINAssist, No Updates Available
 return
 
 installationopen:
@@ -3818,7 +3837,7 @@ setPassword:
    InputBox, new_key, password, , HIDE, 130, 100
    if NOT ErrorLevel
    {
-      IniWrite, %new_key%, %applicationname%.ini, lock, key
+      IniWrite, %new_key%,%a_scriptdir%\%applicationname%.ini, lock, key
       key := new_key
    }
 return
@@ -3827,7 +3846,7 @@ setAutoLock:
    InputBox, new_idle, the idle time(minutes), , , 240, 100
    if NOT ErrorLevel
    {
-      IniWrite, %new_idle%, %applicationname%.ini, lock, idle
+      IniWrite, %new_idle%,%a_scriptdir%\%applicationname%.ini, lock, idle
       idle := new_idle
    }
 return
@@ -4019,7 +4038,7 @@ setFullscreen:
       if_fullscreen = 1
       Menu, interface, Check, %L_fullscreen%
    }
-   IniWrite, %if_fullscreen%, %applicationname%.ini, lock, if_fullscreen
+   IniWrite, %if_fullscreen%,%a_scriptdir%\%applicationname%.ini, lock, if_fullscreen
 return
 
 setTurnoffMonitor:
@@ -4033,7 +4052,7 @@ setTurnoffMonitor:
       if_turnoff_monitor = 1
       Menu, interface, Check, %L_screenoff%
    }
-   IniWrite, %if_turnoff_monitor%, %applicationname%.ini, lock, if_turnoff_monitor
+   IniWrite, %if_turnoff_monitor%,%a_scriptdir%\%applicationname%.ini, lock, if_turnoff_monitor
 return
 
 setMute:
@@ -4047,7 +4066,7 @@ setMute:
       if_mute= 1
       Menu, interface, Check, %L_mute%
    }
-   IniWrite, %if_mute%, %applicationname%.ini, lock, if_mute
+   IniWrite, %if_mute%,%a_scriptdir%\%applicationname%.ini, lock, if_mute
 return
 setDirectLock:
    if ( direct_lock = 1 )
@@ -4060,7 +4079,7 @@ setDirectLock:
       direct_lock = 1
       Menu, setting, Check, %L_direct_lock%
    }
-   IniWrite, %direct_lock%, %applicationname%.ini, lock, direct_lock
+   IniWrite, %direct_lock%,%a_scriptdir%\%applicationname%.ini, lock, direct_lock
 return
 
 setLang:
@@ -4090,7 +4109,7 @@ return
 
 interface1:
    interface = 1
-   IniWrite, 1, %applicationname%.ini, lock, interface
+   IniWrite, 1,%a_scriptdir%\%applicationname%.ini, lock, interface
    Menu, setting, DeleteAll
    Menu, interface, DeleteAll
    ;Gosub makeMenu
@@ -4099,7 +4118,7 @@ return
 
 interface2:
    interface = 2
-   IniWrite, 2, %applicationname%.ini, lock, interface
+   IniWrite, 2,%a_scriptdir%\%applicationname%.ini, lock, interface
    Menu, setting, DeleteAll
    Menu, interface, DeleteAll
    ;Gosub makeMenu
@@ -4108,7 +4127,7 @@ return
 
 interface3:
    interface = 3
-   IniWrite, 3, %applicationname%.ini, lock, interface
+   IniWrite, 3,%a_scriptdir%\%applicationname%.ini, lock, interface
    Menu, setting, DeleteAll
    Menu, interface, DeleteAll
    ;Gosub makeMenu
@@ -4191,7 +4210,7 @@ return
       Hotkey, %hotkey%, start, off
       hotkey := HK
       Hotkey, %hotkey%, start, on
-      IniWrite, %hotkey%, %applicationname%.ini, lock, hotkey
+      IniWrite, %hotkey%,%a_scriptdir%\%applicationname%.ini, lock, hotkey
    }
    else
    {
@@ -4419,7 +4438,7 @@ setCityID:
 	  }
 	  else
 	  {
-		   iniwrite,%cityId%,%applicationname%.ini,weatherSettings,cityId
+		   iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
 	  }
    }
 return
@@ -4430,7 +4449,7 @@ setShowDayCount:
    {
 		if(new_var < 1 or new_var >6)
 			new_var = 3
-      IniWrite, %new_var%, %applicationname%.ini, weatherSettings, showDayCount
+      IniWrite, %new_var%,%a_scriptdir%\%applicationname%.ini, weatherSettings, showDayCount
       showDayCount := new_var
 	  Gosub getWeatherForecast
    }
@@ -4451,11 +4470,11 @@ toggleAutoGetId:
 		cityId := getCityID()
 		Gosub getWeatherForecast
     }
-	iniwrite,%autoGetCityId%,%applicationname%.ini,weatherSettings, autoGetCityId
+	iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 Return
 
 weatherINIREAD:
-IfNotExist,%applicationname%.ini
+IfNotExist,%a_scriptdir%\%applicationname%.ini
 {
 	autoGetCityId := 1 
 	showDayCount := 3
@@ -4463,16 +4482,16 @@ IfNotExist,%applicationname%.ini
 	Gosub,weatherINIWRITE
 	return
 }
-IniRead,autoGetCityId,%applicationname%.ini,weatherSettings, autoGetCityId
+IniRead,autoGetCityId,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 if(autoGetCityId == 1)
 	cityId := getCityID()
 else
-	IniRead,cityId,%applicationname%.ini,weatherSettings,cityId
-IniRead,showDayCount,%applicationname%.ini,weatherSettings,showDayCount
+	IniRead,cityId,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+IniRead,showDayCount,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
 if ( showDayCount < 1 or showDayCount > 6)
 {
 	showDayCount := 3
-	Iniwrite,%showDayCount%,%applicationname%.ini,weatherSettings,showDayCount
+	Iniwrite,%showDayCount%,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
 }
 if %autoGetCityId%
 {
@@ -4482,9 +4501,9 @@ if %autoGetCityId%
 Return
 
 weatherINIWRITE:
-iniwrite,%autoGetCityId%,%applicationname%.ini,weatherSettings, autoGetCityId
-iniwrite,%cityId%,%applicationname%.ini,weatherSettings,cityId
-Iniwrite,%showDayCount%,%applicationname%.ini,weatherSettings,showDayCount
+iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
+iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+Iniwrite,%showDayCount%,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
 Return
 
 
@@ -4854,7 +4873,7 @@ Min(In_Val1,In_Val2)
 }
 
 INIREAD:
-   IfNotExist,%applicationname%.ini
+   IfNotExist,%a_scriptdir%\%applicationname%.ini
    {
       clockFont := "Verdana"
       fontSize := 10
@@ -4896,77 +4915,77 @@ INIREAD:
 	  showPCMeter := 1
       Gosub,INIWRITE
    }
-   IniRead,clockFont,%applicationname%.ini,ClockSettings,clockFont
-   IniRead,fontSize,%applicationname%.ini,ClockSettings,fontSize
-   IniRead,clockFontColor,%applicationname%.ini,ClockSettings,clockFontColor
-   IniRead,clockBGColor,%applicationname%.ini,ClockSettings,clockBGColor
-   IniRead,infoFontSize,%applicationname%.ini,ClockSettings,infoFontSize
-   IniRead,infoFont,%applicationname%.ini,ClockSettings,infoFont
-   IniRead,battFontColor,%applicationname%.ini,ClockSettings,battFontColor
-   IniRead,battFontColorAlert,%applicationname%.ini,ClockSettings,battFontColorAlert
-   IniRead,battBGColor,%applicationname%.ini,ClockSettings,battBGColor
-   IniRead,battBGColorAlert,%applicationname%.ini,ClockSettings,battBGColorAlert
-   IniRead,battBarColor,%applicationname%.ini,ClockSettings,battBarColor
-   IniRead,battBarColorAlert,%applicationname%.ini,ClockSettings,battBarColorAlert
-   IniRead,alertbattLevel,%applicationname%.ini,ClockSettings,alertbattLevel
-   IniRead,memFontColor,%applicationname%.ini,ClockSettings,memFontColor
-   IniRead,memFontColorAlert,%applicationname%.ini,ClockSettings,memFontColorAlert
-   IniRead,memBGColor,%applicationname%.ini,ClockSettings,memBGColor
-   IniRead,memBGColorAlert,%applicationname%.ini,ClockSettings,memBGColorAlert
-   IniRead,memBarColor,%applicationname%.ini,ClockSettings,memBarColor
-   IniRead,memBarColorAlert,%applicationname%.ini,ClockSettings,memBarColorAlert
-   IniRead,memThreshold,%applicationname%.ini,ClockSettings,memThreshold
-   IniRead,cpuFontColor,%applicationname%.ini,ClockSettings,cpuFontColor
-   IniRead,cpuFontColorAlert,%applicationname%.ini,ClockSettings,cpuFontColorAlert
-   IniRead,cpuBGColor,%applicationname%.ini,ClockSettings,cpuBGColor
-   IniRead,cpuBGColorAlert,%applicationname%.ini,ClockSettings,cpuBGColorAlert
-   IniRead,cpuBarColor,%applicationname%.ini,ClockSettings,cpuBarColor
-   IniRead,cpuBarColorAlert,%applicationname%.ini,ClockSettings,cpuBarColorAlert
-   IniRead,cpuThreshold,%applicationname%.ini,ClockSettings,cpuThreshold
-   IniRead,margin,%applicationname%.ini,ClockSettings,margin
-   IniRead,transparency,%applicationname%.ini,ClockSettings,transparency
-   IniRead,memLabel,%applicationname%.ini,ClockSettings,memLabel
-   IniRead,cpuLabel,%applicationname%.ini,ClockSettings,cpuLabel
-   IniRead,timeFormat,%applicationname%.ini,ClockSettings,timeFormat
-   IniRead,showPCMeter,%applicationname%.ini,ClockSettings,showPCMeter
+   IniRead,clockFont,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockFont
+   IniRead,fontSize,%a_scriptdir%\%applicationname%.ini,ClockSettings,fontSize
+   IniRead,clockFontColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockFontColor
+   IniRead,clockBGColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockBGColor
+   IniRead,infoFontSize,%a_scriptdir%\%applicationname%.ini,ClockSettings,infoFontSize
+   IniRead,infoFont,%a_scriptdir%\%applicationname%.ini,ClockSettings,infoFont
+   IniRead,battFontColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,battFontColor
+   IniRead,battFontColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,battFontColorAlert
+   IniRead,battBGColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBGColor
+   IniRead,battBGColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBGColorAlert
+   IniRead,battBarColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBarColor
+   IniRead,battBarColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBarColorAlert
+   IniRead,alertbattLevel,%a_scriptdir%\%applicationname%.ini,ClockSettings,alertbattLevel
+   IniRead,memFontColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,memFontColor
+   IniRead,memFontColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,memFontColorAlert
+   IniRead,memBGColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBGColor
+   IniRead,memBGColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBGColorAlert
+   IniRead,memBarColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBarColor
+   IniRead,memBarColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBarColorAlert
+   IniRead,memThreshold,%a_scriptdir%\%applicationname%.ini,ClockSettings,memThreshold
+   IniRead,cpuFontColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuFontColor
+   IniRead,cpuFontColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuFontColorAlert
+   IniRead,cpuBGColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBGColor
+   IniRead,cpuBGColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBGColorAlert
+   IniRead,cpuBarColor,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBarColor
+   IniRead,cpuBarColorAlert,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBarColorAlert
+   IniRead,cpuThreshold,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuThreshold
+   IniRead,margin,%a_scriptdir%\%applicationname%.ini,ClockSettings,margin
+   IniRead,transparency,%a_scriptdir%\%applicationname%.ini,ClockSettings,transparency
+   IniRead,memLabel,%a_scriptdir%\%applicationname%.ini,ClockSettings,memLabel
+   IniRead,cpuLabel,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuLabel
+   IniRead,timeFormat,%a_scriptdir%\%applicationname%.ini,ClockSettings,timeFormat
+   IniRead,showPCMeter,%a_scriptdir%\%applicationname%.ini,ClockSettings,showPCMeter
    if %showPCMeter%
         Menu, PCMeter, Check, show Window
 Return
 
 INIWRITE:
-   IniWrite,%clockFont%,%applicationname%.ini,ClockSettings,clockFont
-   IniWrite,%fontSize%,%applicationname%.ini,ClockSettings,fontSize
-   IniWrite,%clockFontColor%,%applicationname%.ini,ClockSettings,clockFontColor
-   IniWrite,%clockBGColor%,%applicationname%.ini,ClockSettings,clockBGColor
-   IniWrite,%infoFontSize%,%applicationname%.ini,ClockSettings,infoFontSize
-   IniWrite,%infoFont%,%applicationname%.ini,ClockSettings,infoFont
-   IniWrite,%battFontColor%,%applicationname%.ini,ClockSettings,battFontColor
-   IniWrite,%battFontColorAlert%,%applicationname%.ini,ClockSettings,battFontColorAlert
-   IniWrite,%battBGColor%,%applicationname%.ini,ClockSettings,battBGColor
-   IniWrite,%battBGColorAlert%,%applicationname%.ini,ClockSettings,battBGColorAlert
-   IniWrite,%battBarColor%,%applicationname%.ini,ClockSettings,battBarColor
-   IniWrite,%battBarColorAlert%,%applicationname%.ini,ClockSettings,battBarColorAlert
-   IniWrite,%alertbattLevel%,%applicationname%.ini,ClockSettings,alertbattLevel
-   IniWrite,%memFontColor%,%applicationname%.ini,ClockSettings,memFontColor
-   IniWrite,%memFontColorAlert%,%applicationname%.ini,ClockSettings,memFontColorAlert
-   IniWrite,%memBGColor%,%applicationname%.ini,ClockSettings,memBGColor
-   IniWrite,%memBGColorAlert%,%applicationname%.ini,ClockSettings,memBGColorAlert
-   IniWrite,%memBarColor%,%applicationname%.ini,ClockSettings,memBarColor
-   IniWrite,%memBarColorAlert%,%applicationname%.ini,ClockSettings,memBarColorAlert
-   IniWrite,%memThreshold%,%applicationname%.ini,ClockSettings,memThreshold
-   IniWrite,%cpuFontColor%,%applicationname%.ini,ClockSettings,cpuFontColor
-   IniWrite,%cpuFontColorAlert%,%applicationname%.ini,ClockSettings,cpuFontColorAlert
-   IniWrite,%cpuBGColor%,%applicationname%.ini,ClockSettings,cpuBGColor
-   IniWrite,%cpuBGColorAlert%,%applicationname%.ini,ClockSettings,cpuBGColorAlert
-   IniWrite,%cpuBarColor%,%applicationname%.ini,ClockSettings,cpuBarColor
-   IniWrite,%cpuBarColorAlert%,%applicationname%.ini,ClockSettings,cpuBarColorAlert
-   IniWrite,%cpuThreshold%,%applicationname%.ini,ClockSettings,cpuThreshold
-   IniWrite,%margin%,%applicationname%.ini,ClockSettings,margin
-   IniWrite,%transparency%,%applicationname%.ini,ClockSettings,transparency
-   IniWrite,%memLabel%,%applicationname%.ini,ClockSettings,memLabel
-   IniWrite,%cpuLabel%,%applicationname%.ini,ClockSettings,cpuLabel
-   IniWrite,%timeFormat%,%applicationname%.ini,ClockSettings,timeFormat
-   IniWrite,%showPCMeter%,%applicationname%.ini,ClockSettings,showPCMeter
+   IniWrite,%clockFont%,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockFont
+   IniWrite,%fontSize%,%a_scriptdir%\%applicationname%.ini,ClockSettings,fontSize
+   IniWrite,%clockFontColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockFontColor
+   IniWrite,%clockBGColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,clockBGColor
+   IniWrite,%infoFontSize%,%a_scriptdir%\%applicationname%.ini,ClockSettings,infoFontSize
+   IniWrite,%infoFont%,%a_scriptdir%\%applicationname%.ini,ClockSettings,infoFont
+   IniWrite,%battFontColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battFontColor
+   IniWrite,%battFontColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battFontColorAlert
+   IniWrite,%battBGColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBGColor
+   IniWrite,%battBGColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBGColorAlert
+   IniWrite,%battBarColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBarColor
+   IniWrite,%battBarColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,battBarColorAlert
+   IniWrite,%alertbattLevel%,%a_scriptdir%\%applicationname%.ini,ClockSettings,alertbattLevel
+   IniWrite,%memFontColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memFontColor
+   IniWrite,%memFontColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memFontColorAlert
+   IniWrite,%memBGColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBGColor
+   IniWrite,%memBGColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBGColorAlert
+   IniWrite,%memBarColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBarColor
+   IniWrite,%memBarColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memBarColorAlert
+   IniWrite,%memThreshold%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memThreshold
+   IniWrite,%cpuFontColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuFontColor
+   IniWrite,%cpuFontColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuFontColorAlert
+   IniWrite,%cpuBGColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBGColor
+   IniWrite,%cpuBGColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBGColorAlert
+   IniWrite,%cpuBarColor%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBarColor
+   IniWrite,%cpuBarColorAlert%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuBarColorAlert
+   IniWrite,%cpuThreshold%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuThreshold
+   IniWrite,%margin%,%a_scriptdir%\%applicationname%.ini,ClockSettings,margin
+   IniWrite,%transparency%,%a_scriptdir%\%applicationname%.ini,ClockSettings,transparency
+   IniWrite,%memLabel%,%a_scriptdir%\%applicationname%.ini,ClockSettings,memLabel
+   IniWrite,%cpuLabel%,%a_scriptdir%\%applicationname%.ini,ClockSettings,cpuLabel
+   IniWrite,%timeFormat%,%a_scriptdir%\%applicationname%.ini,ClockSettings,timeFormat
+   IniWrite,%showPCMeter%,%a_scriptdir%\%applicationname%.ini,ClockSettings,showPCMeter
 Return
 
 ExtractInteger(ByRef pSource, pOffset = 0, pIsSigned = false, pSize = 4)
@@ -5559,7 +5578,8 @@ IfNotExist,cache/clips/%tempsave%.avc
 	Tooltip, No Clip Exists
 	sleep, 700
 	Tooltip
-	Reload
+	caller := true
+	; Reload
 }
 else
 {
@@ -5910,6 +5930,9 @@ LastClip :=
 FileDelete,cache\clips\*.avc
 FileDelete,cache\thumbs\*.jpg
 FileDelete,cache\fixate\*.fxt
+; howiefh
+IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+; howiefh
 cursave := 0
 tempsave := 0
 return
@@ -5919,6 +5942,9 @@ LastClip :=
 FileDelete,cache\clips\%realactive%.avc
 FileDelete,cache\thumbs\%realactive%.jpg
 FileDelete,cache\fixate\%realactive%.fxt
+; howiefh
+IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+; howiefh
 tempsave := realactive - 1
 if (tempsave == 0)
 	tempsave := 1
