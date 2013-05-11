@@ -1,0 +1,2 @@
+java -jar rename.jar
+

@@ -1,0 +1,84 @@
+2013.5.09
+1.去掉了qq旋风，迅雷助手模块
+2.加入了ClipJump，并对其做了一些更改
+开始的“Clipboard =”备注释掉。paste标签中的reload被替换为caller := true。
+在脚本重启时将lastclip保存到配置文件中，脚本启动后从配置文件中读出该值。
+
+2012.5.26
+1.将以其他方式打开文件的功能写到函数openWith函数中，添加了快捷键打开功能
+
+2012.5.2
+1.修复screenlock设置快捷键按钮失效的bug
+2.天气预报可以对城市ID，显示的天数和是否自动获取ID进行设置，每次启动时，
+先要读配置文件，如果是第一次使用三个参数使用默认值autoGetCityId := 1 
+showDayCount := 3  cityId := getCityID()，并将之写入配置文件；否则读配置文件，
+如果autoGetCityId := 1，则要获取城市ID，否则直接读配置文件。
+设置autoGetCityId为1时，设置ID失效，获取一次城市ID，获取天气信息，写配置文件。
+设置城市ID，通过city是否为空检测ID是否有效，无效提示，有效写配置文件。设置显
+示天数时，检测输入是否合法不合法就将天数设为3，重新获取天气信息，写配置文件。
+天气信息来自http://www.weather.com.cn 获取ID:http://61.4.185.48:81/g/
+
+2012.5.1
+1.天气预报，在第一次使用时获取数据。到18:00或8:00时也会获取数据，显示数据时
+先检测是否已获取数据，没有则获取。获取时先测网络是否可连接，不能连接则返回
+
+2012.4.30
+1.增加了 HDDMonitor.ahk. gui 12
+http://www.autohotkey.com/community/viewtopic.php?t=17954
+2.对天气预报做了调整，只有每次打开脚本或是18点或08点整更新数据
+3.用gui 8显示时间，电量，内存，cpu
+
+2012.4.29
+1.增加了在屏幕上显示时间，电量，内存，cpu的功能。
+用了gui  5-11
+2.添加，天气预报功能，win+w显示天气预报，或将鼠标移到电量，内存，cpu处。
+
+2012.4.7
+1.更名WINAssist
+2.修复右键菜单滚动滚轮也被最大化的bug。
+
+2012.3.10
+1.托盘气泡显示计划任务列表
+2.标签f_OpenFavorite增加
+SplitPath, f_OpenFavPath, , f_OutDir, , , 
+StringTrimLeft, f_OpenFavPath, i_%A_ThisMenu%_%menurealitempos%_Path, 0
+SetWorkingDir, %f_OutDir%
+
+2012.3.4
+1.加了NiftyWindows透明窗口 fn0562
+win ctrl 中键      整个窗口透明 鼠标穿透
+win ctrl 单击	   整个窗口（除了标题栏）透明 鼠标穿透
+win 中键      	   取消当前窗口的透明
+win 滚轮           透明
+
+2012.3.3
+1.去掉了右键改变窗口改用EasyWindowDrag_(KDE)
+
+2012.2.29
+1.对kde模式作了修改，采用EasyWindowDrag_(KDE)  OSAssist2012022901.ahk
+2.comment掉了kde（EasyWindowDrag_(KDE)）部分，采用NiftyWindows，对wheelup wheeldown也有修改  OSAssist 2012022902.ahk
+3.对中键功能进行了扩充，当在菜单栏点击中键时，卷起窗口，在窗口其他位置点击中间，最小化窗口（资源管理器不支持最小化）
+但是卷起窗口的功能在ie 资源管理器  图片查看器中表现不好
+4.win + ctrl + r  放下所有卷起的窗口
+  win +lbutton    窗口置顶或取消置顶
+  rbutton 长按    拖动窗口  改变窗口大小
+  rbutton + 滚轮  alt tab 功能
+5.滚轮向下滚时不再是最小化，而是恢复窗口大小
+
+2012.2.25
+1.对托盘菜单进行了修改，现在可以编辑配置文件[Favorites]下的内容来设置菜单栏的显示。等号左边是要显示的名称，右边是路径。用:子菜单栏|来加入子菜单。用-来加入分割线。
+示例：
+VMService=%A_ScriptDir%\soft\VMServiceStart.exe
+迅雷助手=%A_ScriptDir%\soft\迅雷助手.exe
+-
+:编程|eclipse=D:\Program Files\eclipse\eclipse.exe
+:编程|Visual C++ 6.0 =D:\Program Files\Microsoft Visual Studio\Common\MSDev98\Bin\MSDEV.EXE
+
+2012.2.24
+1.对gui进行了调整。
+提醒,一分钟后将强制休息，请作好准备  gui1
+虚拟桌面  gui2
+链接转换  gui3
+screenlock 白领们的小助手：老板键、视力保护、锁屏三合一软件  gui4
+2.对menu也做了调整，为screenlock设计了makescreenlockmenu标签
+
