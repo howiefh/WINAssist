@@ -648,7 +648,7 @@ IniRead,quality,%A_ScriptDir%\%applicationname%.ini,Clipjump,Quality_of_Thumbnai
 IniRead,keepsession,%A_ScriptDir%\%applicationname%.ini,Clipjump,Keep_Session
 IniRead,R_lf,%A_ScriptDir%\%applicationname%.ini,Clipjump,Remove_Ending_Linefeeds
 Iniread,generalsleep,%A_ScriptDir%\%applicationname%.ini,Clipjump,Wait_Key
-Iniread,lastclip,%A_ScriptDir%\%applicationname%.ini,Clipjump,lastclip
+Iniread,lastclip,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 }
 
 ;#°Ô°Ô°Ô Û±Í ÷ ∆°Ô°Ô°Ô
@@ -1309,7 +1309,7 @@ return
 Tray_Reload:
 If (FnSwitch(0565)=1)
 {
-IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+IniWrite,%lastclip%,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 }
 Reload
 Return
@@ -5931,7 +5931,7 @@ FileDelete,cache\clips\*.avc
 FileDelete,cache\thumbs\*.jpg
 FileDelete,cache\fixate\*.fxt
 ; howiefh
-IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+IniWrite,%lastclip%,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 ; howiefh
 cursave := 0
 tempsave := 0
@@ -5943,7 +5943,7 @@ FileDelete,cache\clips\%realactive%.avc
 FileDelete,cache\thumbs\%realactive%.jpg
 FileDelete,cache\fixate\%realactive%.fxt
 ; howiefh
-IniWrite, %lastclip%, %a_scriptdir%\%applicationname%.ini, Clipjump, lastclip
+IniWrite,%lastclip%,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 ; howiefh
 tempsave := realactive - 1
 if (tempsave == 0)
