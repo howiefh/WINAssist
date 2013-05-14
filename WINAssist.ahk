@@ -594,6 +594,7 @@ IfNotExist,%A_ScriptDir%\%applicationname%.ini
 IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
 ; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
 IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
+IniRead, screenCaptureSoft, %A_ScriptDir%\%applicationname%.ini, softpath,ScreenCaptureSoft
 
 ;*******************************  read setting file  *******************************{{{
 	
@@ -1430,7 +1431,7 @@ return
 
 ;===================打开截图工具===================
 ^!z:: 
-run "%A_Programs%\CloudShortcut\FastStone Capture 汉化版"
+run %screenCaptureSoft%
 return
 ;===================打开截图工具=================== 
 /*

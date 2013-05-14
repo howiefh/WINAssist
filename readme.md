@@ -1,4 +1,4 @@
-WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀的AutoHotKey脚本，如：[HK4WIN](http://www.songruihua.com/hk4win.html)，[链接转换](http://ahk.5d6d.net/viewthread.php?tid=2025)，[screenlock ](http://www.appinn.com/Lock-Screen-Appinn/)，[HDDMonitor](http://www.autohotkey.com/board/topic/16501-hdd-activity-monitoring-led/)，[PCMeter](http://fures.hu/my_ahk_updates/PCMeter.ahk)，[KDE Style](http://www.autohotkey.com/docs/scripts/EasyWindowDrag_\(KDE\).htm)，[DesktopSwitch](http://myhotkey.googlecode.com/svn/trunk/bin/%E5%A4%9A%E5%B1%8F%E5%B9%95%E5%88%87%E6%8D%A2/)，[NiftyWindows](http://www.autohotkey.com/board/topic/2460-niftywindows/)等。在此谨向以上脚本的作者表示感谢！
+WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀的AutoHotKey脚本，如：[HK4WIN](http://www.songruihua.com/hk4win.html)，[链接转换](http://ahk.5d6d.net/viewthread.php?tid=2025)，[screenlock ](http://www.appinn.com/Lock-Screen-Appinn/)，[HDDMonitor](http://www.autohotkey.com/board/topic/16501-hdd-activity-monitoring-led/)，[PCMeter](http://fures.hu/my_ahk_updates/PCMeter.ahk)，[KDE Style](http://www.autohotkey.com/docs/scripts/EasyWindowDrag_\(KDE\).htm)，[DesktopSwitch](http://myhotkey.googlecode.com/svn/trunk/bin/%E5%A4%9A%E5%B1%8F%E5%B9%95%E5%88%87%E6%8D%A2/)，[NiftyWindows](http://www.autohotkey.com/board/topic/2460-niftywindows/)，[ClipJump](http://avi-win-tips.blogspot.in/p/clipjump.html)等。在此谨向以上脚本的作者表示感谢！
     
 本脚本实现的功能：
   
@@ -249,6 +249,6 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
   <td></td>
  </tr>
 </table>
-本人使用本脚本已有一年多，所以一些设置是针对本人使用习惯，你可以自行根据自己习惯更改设置。 打开截图工具功能需要安装FastStone Capture 汉化版，并且开始菜单有"%A_Programs%\CloudShortcut\FastStone Capture 汉化版"，后期会考虑完善此功能。一些功能仅限于在win7中使用。
+本人使用本脚本已有一年多，所以一些设置是针对本人使用习惯，你可以自行根据自己习惯更改设置。[Favorites]、[softpath]标签下的路径需要自己更改，一些功能也仅限于在win7中使用。
 
 
