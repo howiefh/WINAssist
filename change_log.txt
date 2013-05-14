@@ -3,6 +3,7 @@
 2.加入了ClipJump，并对其做了一些更改
 开始的“Clipboard =”备注释掉。paste标签中的reload被替换为caller := true。
 在脚本重启时将lastclip保存到配置文件中，脚本启动后从配置文件中读出该值。
+gui 15,16
 
 2012.5.26
 1.将以其他方式打开文件的功能写到函数openWith函数中，添加了快捷键打开功能

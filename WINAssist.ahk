@@ -594,6 +594,7 @@ IfNotExist,%A_ScriptDir%\%applicationname%.ini
 IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
 ; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
 IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
+IniRead, screenCaptureSoft, %A_ScriptDir%\%applicationname%.ini, softpath,ScreenCaptureSoft
 
 ;*******************************  read setting file  *******************************{{{
 	
@@ -1430,7 +1431,7 @@ return
 
 ;===================打开截图工具===================
 ^!z:: 
-run "%A_Programs%\CloudShortcut\FastStone Capture 汉化版"
+run %screenCaptureSoft%
 return
 ;===================打开截图工具=================== 
 /*
@@ -4161,7 +4162,7 @@ CheckIdle:
 	; gui,1:show
 	; sleep,1000
 	; gui,1:Destroy
-   TrayTip, 现在时间: %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min% %A_DDDD%,todo: `n%Full_todolist% `n提醒， 一分钟后将强制休息，请作好准备! ,30,1 
+   TrayTip, 现在时间: %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min% %A_DDDD%,`n%Full_todolist% `n提醒， 一分钟后将强制休息，请作好准备! ,30,1 
    sleep,60000
    Gosub gosleep
    }
