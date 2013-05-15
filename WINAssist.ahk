@@ -1,5 +1,5 @@
 ; ************************************************************************************************
-;        Version:  1.0
+;        Version:  1.1
 ;           Date:  2013/05/05
 ;		Platform:  Windows 7
 ;	      Author:  howiefh
@@ -5576,7 +5576,7 @@ else
 }
 IfNotExist,cache/clips/%tempsave%.avc
 {
-	Tooltip, No Clip Exists
+	Tooltip,%tempsave%.avc No Clip Exists
 	sleep, 700
 	Tooltip
 	caller := true
