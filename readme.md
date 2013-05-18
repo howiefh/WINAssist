@@ -219,6 +219,11 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
   <td>565</td>
  </tr>
  <tr>
+  <td></td>
+  <td>PCMeter开关</td>
+  <td>566</td>
+ </tr>
+ <tr>
   <td>中键单击窗口</td>
   <td>窗口最小化</td>
   <td></td>

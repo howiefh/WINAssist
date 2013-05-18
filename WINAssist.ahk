@@ -636,6 +636,7 @@ IniRead, Fn0562_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0562
 IniRead, Fn0563_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0563
 IniRead, Fn0564_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0564
 IniRead, Fn0565_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0565
+IniRead, Fn0566_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0566
 
 ;#★★Clipjump★
 ; Clipboard = 
@@ -850,7 +851,7 @@ totalclips := Threshold + maxclips
 
 loop,
 {
-IfNotExist,cache/Clips/%a_index%.avc
+IfNotExist,%A_ScriptDir%/cache/Clips/%a_index%.avc
 {
 	cursave := a_index - 1
 	tempsave := cursave
@@ -870,10 +871,10 @@ FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk,%a_scriptdir%/
 Menu,more,Check,开机启动
 }
 
-FileCreateDir,cache
-FileCreateDir,cache/clips
-FileCreateDir,cache/thumbs
-FileCreateDir,cache/fixate
+FileCreateDir,%A_ScriptDir%/cache
+FileCreateDir,%A_ScriptDir%/cache/clips
+FileCreateDir,%A_ScriptDir%/cache/thumbs
+FileCreateDir,%A_ScriptDir%/cache/fixate
 FileSetAttrib,+H,%a_scriptdir%\cache
 
 scrnhgt := A_ScreenHeight / 2.5
@@ -911,7 +912,9 @@ weatherInfoUpdate = 0
 Gosub weatherINIREAD
 
 ; Shows clock, batterypower, mem load and cpu load on top of screen
-
+; PCMeter
+if(FnSwitch(0566)=1)
+{
 Gosub, INIREAD
 
 windowTitle := "PCMeter"
@@ -958,7 +961,7 @@ battInfo := GetPowerStatus(acLineStatus)
 VarSetCapacity( IdleTicks, 2*4 )
 VarSetCapacity( memstatus, 100 )
 
-OnExit, ExitSub
+; OnExit, ExitSub
 
 Gosub, CALCULATEPOSITIONS
 Gosub, CREATECLOCKWINDOW
@@ -971,7 +974,7 @@ SetTimer, UPDATECPU, 1500
 SetTimer, WATCHCURSOR, 115
 SetTimer, KEEPONTOP, 1000
 }
-
+}
 ;HDDMonitor
 if(FnSwitch(0564)=1)
 {
@@ -1289,8 +1292,11 @@ if(FnSwitch(0564)=1)
 	Menu, HDDMonitor, Add, Pause,            TogglePause
 	Menu,tray , add, HDDMonitor, :HDDMonitor
 }
-Menu, PCMeter, Add,show Window,  TogglePCMeter
-Menu, tray, add, PCMeter, :PCMeter
+if(FnSwitch(0566)=1)
+{
+	Menu, PCMeter, Add,show Window,  TogglePCMeter
+	Menu, tray, add, PCMeter, :PCMeter
+}
 return
 
 
@@ -1345,16 +1351,13 @@ return
 
 update:
 URLDownloadToFile,%updatefile%,%a_scriptdir%/cache/latestversion.txt
-FileRead,latestversion,%a_scriptdir%/cache/latestversion.txt
+FileReadLine,latestversion,%a_scriptdir%/cache/latestversion.txt,1
 IfGreater,latestversion,%version%
 {
 MsgBox, 48, Update Avaiable, Your Version = %version%         `nCurrent Version = %latestversion%       `n`nGo to Website
 IfMsgBox OK
 {
-	IfExist, %a_programfiles%/Internet Explorer/iexplore.exe
-		run, iexplore.exe "%productpage%"
-	else
-		run, %productpage%
+	run, %productpage%
 }
 }
 else
@@ -3853,9 +3856,12 @@ setAutoLock:
 return
 
 start:
+; bolckinput好像不好使
+   ; BlockInput, on  ;禁止键盘和鼠标输入
+   ; 按win还是会呼出开始菜单
+   GoSub inputoff
    SetTimer, CheckIdle, Off
    SystemCursor(0)
-   BlockInput, MouseMove
    if ( interface = 1 )
    {
       Gui, 4:+AlwaysOnTop +Disabled -SysMenu +Owner -Caption +ToolWindow
@@ -3919,19 +3925,12 @@ start:
 	*/ 
 	Send {Volume_Down 50}
    }
-   Hotkey, Lbutton, stop, on
-   Hotkey, Rbutton, stop, on
-   Hotkey, Mbutton, stop, on
-   Hotkey, LWin, stop, on
-   Hotkey, Rwin, stop, on
-   Hotkey, LAlt, stop, on
-   Hotkey, RAlt, stop, on
-   Hotkey, Ctrl, stop, on
-   Hotkey, esc, stop, on
-   Hotkey, del, stop, on
-   Hotkey, f1, stop, on
-   Hotkey, f4, stop, on
-   Hotkey, tab, stop, on
+gosub startunlock
+; BlockInput, off  ;禁止键盘和鼠标输入
+GoSub inputon
+return
+
+startunlock:
    i:=1
    Loop
    {
@@ -3992,29 +3991,15 @@ start:
 		 */
          SystemCursor(1)
 
-         BlockInput, MouseMoveOff
-         Hotkey, Lbutton, stop, off
-         Hotkey, Rbutton, stop, off
-         Hotkey, Mbutton, stop, off
-         Hotkey, LWin, stop, off
-         Hotkey, Rwin, stop, off
-         Hotkey, LAlt, stop, off
-         Hotkey, RAlt, stop, off
-         Hotkey, Ctrl, stop, off
-         Hotkey, esc, stop, off
-         Hotkey, del, stop, off
-         Hotkey, f1, stop, off
-         Hotkey, f4, stop, off
-         Hotkey, tab, stop, off
 		 if_sleep_time=0
-			starttime:=A_now ;锁屏后强制休息时间重新开始计时
-			temptime:=starttime
-			temptime+=worktime,Minutes
-			formattime,showtime,%temptime%,time
-			menutipshow=%Full_todolist%电脑将在%showtime%强制休息
-			menu,tray,Tip,%menutipshow%  ;鼠标经过图标时将显示休息时间
+		starttime:=A_now ;锁屏后强制休息时间重新开始计时
+		temptime:=starttime
+		temptime+=worktime,Minutes
+		formattime,showtime,%temptime%,time
+		menutipshow=%Full_todolist%电脑将在%showtime%强制休息
+		menu,tray,Tip,%menutipshow%  ;鼠标经过图标时将显示休息时间
 ;			menu,tray,Tip,电脑将在%showtime%强制休息
-			temptime+=-1,Minutes
+		temptime+=-1,Minutes
          SetTimer, CheckIdle, On
 
          return
@@ -4023,10 +4008,46 @@ start:
 EmptyMem()   
 return
 
-stop:
+inputoff:
+; 禁用热键及一些功能键
+	suspend on
+	BlockInput, MouseMove
+	Hotkey, Lbutton, stop, on
+	Hotkey, Rbutton, stop, on
+	Hotkey, Mbutton, stop, on
+	Hotkey, LWin, stop, on
+	Hotkey, Rwin, stop, on
+	Hotkey, LAlt, stop, on
+	Hotkey, RAlt, stop, on
+	Hotkey, Ctrl, stop, on
+	Hotkey, esc, stop, on
+	Hotkey, del, stop, on
+	Hotkey, f1, stop, on
+	Hotkey, f4, stop, on
+	Hotkey, tab, stop, on
 return
 
+inputon:
+; 启用热键及一些功能键
+	suspend off
+	blockinput, mousemoveoff
+	hotkey, lbutton, stop, off
+	hotkey, rbutton, stop, off
+	hotkey, mbutton, stop, off
+	hotkey, lwin, stop, off
+	hotkey, rwin, stop, off
+	hotkey, lalt, stop, off
+	hotkey, ralt, stop, off
+	Hotkey, Ctrl, stop, off
+	Hotkey, esc, stop, off
+	Hotkey, del, stop, off
+	Hotkey, f1, stop, off
+	Hotkey, f4, stop, off
+	Hotkey, tab, stop, off
+return
 
+stop:
+return
 
 setFullscreen:
    if ( if_fullscreen = 1 )
@@ -4145,8 +4166,6 @@ CheckIdle:
          Gosub start
       }
    }
-
- 
   
      if temptime<%A_now%
    {
@@ -4233,27 +4252,37 @@ TurnoffMonitor:
 return
 
 gosleep:   ;锁屏休息
+; BlockInput, on  ;禁止键盘和鼠标输入
+GoSub inputoff
 SetTimer, CheckIdle, Off
-Gui, 4:+AlwaysOnTop +Disabled -SysMenu +Owner -Caption +ToolWindow
+screenLockBGColor := "21AABD"
+MyProgressBGColor := "04477c"
+MyProgressColor := "70e1ff"
+
+Gui, 4:+LastFound +AlwaysOnTop +Disabled -SysMenu +Owner -Caption +ToolWindow
 Gui, 4:margin, 0,0
 Gui, 4:Add, Picture, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight%, %A_ScriptDir%\icon\lock.jpg
+
 xx:=(A_ScreenWidth-400)/2
 yy:=A_ScreenHeight/2
-Gui, 4:Add, Progress, x%xx% y%yy% vMyProgress w400
-Gui, 4:Add, text, vMytext w400 h50
-gui, 4:font, s20, Verdana 
-GuiControl, 4:Font, MyText
-Gui, 4:Color, c2f9f4
-GuiControl,4:, MyText, 你工作很久了,请休息休息!!!
-;Gui, Color, %CustomColor%
+Gui, 4:Add, Progress, x%xx% y%yy% vMyProgress w400 c%MyProgressColor% background%MyProgressBGColor% 
+; Gui, 4:Add, Progress, x%xx% y%yy% vMyProgress w400 -smooth
+gui, 4:font, s18 bold, Verdana 
+Gui, 4:Add, text, vMytext w400 h60 +Center BackgroundTrans,  `n你工作很久了,请休息休息!!!
+Gui, 4:Color, %screenLockBGColor%
 Gui, 4:Show, Maximize
 		 
-   BlockInput, on  ;禁止键盘和鼠标输入
-   gosub ButtonStartTheBarMoving
-   BlockInput, off  ;允许键盘和鼠标输入 
-   Gui, 4:Destroy
-   if_sleep_time=1
-   gosub start   ;强制休息完后调用锁屏
+gosub ButtonStartTheBarMoving
+
+GuiControl, 4:hide, MyProgress
+GuiControl, 4:hide, Mytext
+
+if_sleep_time=1
+; gosub start   ;强制休息完后调用锁屏
+gosub startunlock
+
+; BlockInput, off  ;允许键盘和鼠标输入 
+GoSub inputon
 return
 
 ButtonStartTheBarMoving:  ;滑动条
@@ -5075,8 +5104,8 @@ KEEPONTOP:
 Return
 
 
-ExitSub:
-ExitApp
+; ExitSub:
+; ExitApp
 
 TogglePCMeter:
     if %showPCMeter%
@@ -5574,9 +5603,9 @@ If (tempsave == 1)
 else
 	tempsave-=1
 }
-IfNotExist,cache/clips/%tempsave%.avc
+IfNotExist,%A_ScriptDir%/cache/clips/%tempsave%.avc
 {
-	Tooltip,%tempsave%.avc No Clip Exists
+	Tooltip, No Clip Exists
 	sleep, 700
 	Tooltip
 	caller := true
@@ -5584,37 +5613,44 @@ IfNotExist,cache/clips/%tempsave%.avc
 }
 else
 {
-Hotkey,^c,MoveBack,On
-Hotkey,^x,Cancel,On
-Hotkey,^Space,Fixate,On
-Hotkey,^S,Ssuspnd,On
+	Hotkey,^c,MoveBack,On
+	Hotkey,^x,Cancel,On
+	Hotkey,^Space,Fixate,On
+	Hotkey,^S,Ssuspnd,On
 
-fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%tempsave%.avc
-gosub, fixcheck
-realclipno := cursave - tempsave + 1
-ifequal,clipboard
-{
-	Tooltip, Clip %realclipno% of %cursave% %fixstatus%
-	gosub, showpreview
-	settimer,ctrlcheck,50
-}
-else
-{
-	length := strlen(Clipboard)
-	IfGreater,length,200
+	fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%tempsave%.avc
+	gosub, fixcheck
+	realclipno := cursave - tempsave + 1
+	ifequal,clipboard
 	{
-		StringLeft,halfclip,Clipboard, 200
-		halfclip := halfclip . "                      >>>>  .............More"
+		Tooltip, Clip %realclipno% of %cursave% %fixstatus%
+		gosub, showpreview
+		settimer,ctrlcheck,50
 	}
 	else
-		halfclip := Clipboard
-	ToolTip, Clip %realclipno% of %cursave% %fixstatus%`n%halfclip%
-	settimer,ctrlcheck,50
+	{
+		length := strlen(Clipboard)
+		IfGreater,length,200
+		{
+			StringLeft,halfclip,Clipboard, 200
+			halfclip := halfclip . "                      >>>>  .............More"
+		}
+		else
+			halfclip := Clipboard
+		ToolTip, Clip %realclipno% of %cursave% %fixstatus%`n%halfclip%
+		settimer,ctrlcheck,50
+	}
+	realactive := tempsave
+	tempsave-=1
+	If (tempsave == 0)
+		tempsave := cursave
 }
-realactive := tempsave
-tempsave-=1
-If (tempsave == 0)
-	tempsave := cursave
+
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] Paste cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 return
 
@@ -5643,6 +5679,12 @@ If errlvl = 1
 	IfEqual,cursave,%totalclips%
 		gosub,compacter
 	}
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] err1 cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 }
 If errlvl = 2
 {
@@ -5654,11 +5696,24 @@ If errlvl = 2
 	gosub, clipsaver
 	IfEqual,cursave,%totalclips%
 		gosub, compacter
+
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] err2 cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 }
 tempclipall = 
 sleep, 500
 Tooltip
 
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] clipchange cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 EmptyMem()
 }
 return
@@ -5740,6 +5795,13 @@ setTimer,CtrlforCopy,Off
 return
 
 Blocker:
+; debug
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] blocker cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 return
 
 Fixate:
@@ -5760,7 +5822,21 @@ else
 return
 
 clipsaver:
-fileappend,%ClipboardAll%,cache/clips/%cursave%.avc
+fileappend,%ClipboardAll%,%A_ScriptDir%/cache/clips/%cursave%.avc
+if ErrorLevel   ; 也就是说它既不是空值，也不是0.
+{
+	fileappendErr := 1
+	StringLeft,halfclip,Clipboard,200
+	FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+	fileappend ,[%errortime%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
+ifnotexist %A_ScriptDir%/cache/clips/%cursave%.avc
+{
+	StringLeft,halfclip,Clipboard,200
+	FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+	fileappend ,[%errortime%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
+
 loop,%cursave%
 {
 tempno := cursave - a_index + 1
@@ -5781,6 +5857,12 @@ IfExist,cache\fixate\%tempno%.fxt
 }
 t_tempno =
 tempno = 
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] clipsaver cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 return
 
 fixcheck:
@@ -5794,28 +5876,28 @@ ctrlcheck:
 GetKeyState,ctrlstate,ctrl
 if ctrlstate=u
 {
-caller := false
-gui, 15: hide
-IfEqual,ctrlref,cancel
-{
-	ToolTip, Cancelled
-	tempsave := cursave
-}
+	caller := false
+	gui, 15: hide
+	IfEqual,ctrlref,cancel
+	{
+		ToolTip, Cancelled
+		tempsave := cursave
+	}
 	else IfEqual,ctrlref,deleteall
 	{
 		Tooltip,Everything Deleted
 		gosub, cleardata
 	}
 	else IfEqual,ctrlref,delete
+	{
+		Tooltip,Deleted
+		gosub, clearclip
+	}
+	else
+	{
+		Tooltip, Pasting...
+		if (R_lf)
 		{
-			Tooltip,Deleted
-			gosub, clearclip
-		}
-		else
-		{
-			Tooltip, Pasting...
-			if (R_lf)
-			{
 			if (Substr(Clipboard,-1) == "`r`n")
 			{
 				CopyMessage = 
@@ -5845,45 +5927,45 @@ IfEqual,ctrlref,cancel
 				CopyMessage = Transfered to ClipJump
 				}
 			}
+		}
+		else
+		{
+		If (Substr(Clipboard,-11) == "   --[PATH][")
+			{
+			StringTrimRight,tempclip,Clipboard,12
+			SendInput {RAW} %tempclip%
 			}
 			else
 			{
-			If (Substr(Clipboard,-11) == "   --[PATH][")
-				{
-				StringTrimRight,tempclip,Clipboard,12
-				SendInput {RAW} %tempclip%
-				}
-				else
-				{
-				CopyMessage = 
-				Send, ^v
-				sleep, %generalsleep%
-				Loop
-					IfExist,cache\clips\%cursave%.avc
-						break
-				CopyMessage = Transfered to ClipJump
-				}
+			CopyMessage = 
+			Send, ^v
+			sleep, %generalsleep%
+			Loop
+				IfExist,cache\clips\%cursave%.avc
+					break
+			CopyMessage = Transfered to ClipJump
 			}
-			tempsave := realactive
 		}
-SetTimer,ctrlcheck,Off
-caller := true
-in_back := false
-tempclip = 
-ctrlref = 
-sleep, 700
-Tooltip
-Hotkey,^S,Ssuspnd,Off
-Hotkey,^c,MoveBack,Off
-Hotkey,^x,Cancel,Off
-Hotkey,^Space,Fixate,Off
-Hotkey,^x,Deleteall,Off
-Hotkey,^x,Delete,Off
-;;
-Hotkey,$^c,NativeCopy,On
-Hotkey,$^x,NativeCut,On
-;;
-EmptyMem()
+		tempsave := realactive
+	}
+	SetTimer,ctrlcheck,Off
+	caller := true
+	in_back := false
+	tempclip = 
+	ctrlref = 
+	sleep, 700
+	Tooltip
+	Hotkey,^S,Ssuspnd,Off
+	Hotkey,^c,MoveBack,Off
+	Hotkey,^x,Cancel,Off
+	Hotkey,^Space,Fixate,Off
+	Hotkey,^x,Deleteall,Off
+	Hotkey,^x,Delete,Off
+	;;
+	Hotkey,$^c,NativeCopy,On
+	Hotkey,$^x,NativeCut,On
+	;;
+	EmptyMem()
 }
 return
 
@@ -5924,6 +6006,12 @@ loop, %maxclips%
 }
 cursave := maxclips
 tempsave := cursave
+if fileappendErr
+{
+StringLeft,halfclip,Clipboard,200
+ FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
+fileappend ,[%errortime%] compacter cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+}
 return
 
 cleardata:
@@ -5961,9 +6049,9 @@ loop,%looptime%
 {
 	newname := realactive
 	realactive+=1
-	FileMove,cache/clips/%realactive%.avc,cache/clips/%newname%.avc
-	FileMove,cache/thumbs/%realactive%.jpg,cache/thumbs/%newname%.jpg
-	FileMove,cache/fixate/%realactive%.fxt,cache/fixate/%newname%.fxt
+	FileMove,%A_ScriptDir%/cache/clips/%realactive%.avc,%A_ScriptDir%/cache/clips/%newname%.avc
+	FileMove,%A_ScriptDir%/cache/thumbs/%realactive%.jpg,%A_ScriptDir%/cache/thumbs/%newname%.jpg
+	FileMove,%A_ScriptDir%/cache/fixate/%realactive%.fxt,%A_ScriptDir%/cache/fixate/%newname%.fxt
 }
 }
 return
@@ -6100,3 +6188,4 @@ GoSub TRA_ExitHandler
 ExitApp
 
 ; vim:fdm=marker
+
