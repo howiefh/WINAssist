@@ -539,7 +539,7 @@ POPUPMENU(wParam, lParam)
 }
 openWith(win_Class)
 {
-	global GVIM,POTPLAYER   ;SPLAYER
+	global GVIM,POTPLAYER,potplayerExtList,gvimExtList   ;SPLAYER
 	If (win_Class = "WorkerW"  or win_Class = "CabinetWClass") 		
 	{
 		tempclip=%clipboard%
@@ -549,13 +549,15 @@ openWith(win_Class)
 		clipboard=%tempclip%
 		SplitPath, Full_FileName, , , ext
 		;msgbox, %ext#If%
-		if (ext="txt" or ext="c" or ext= "cpp" or ext="html" or ext="ahk" or ext="sql")
+		; if (ext="txt" or ext="c" or ext= "cpp" or ext="html" or ext="ahk" or ext="sql")
+		if ext in %gvimExtList%
 		{
-			;msgbox, %GVIM%
+			; msgbox, %GVIM%
 			run %GVIM% "%Full_FileName%"
 			return
 		}
-		else if (ext="wmv" or ext="mp4" or ext="rm" or ext="rmvb" or ext="avi" or ext="mpg" or ext="flv" or ext="swf" or ext="mkv" or ext="mpg" or ext="mpeg")
+		; else if (ext="wmv" or ext="mp4" or ext="rm" or ext="rmvb" or ext="avi" or ext="mpg" or ext="flv" or ext="swf" or ext="mkv" or ext="mpg" or ext="mpeg")
+		else if ext in %potplayerExtList%
 		{
 			; run %SPLAYER% "%Full_FileName%"
 			run %POTPLAYER% "%Full_FileName%"
@@ -592,8 +594,10 @@ IfNotExist,%A_ScriptDir%\%applicationname%.ini
 	ExitApp
 }
 IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
+IniRead, gvimExtList, %A_ScriptDir%\%applicationname%.ini, ExtList,gvimExtList
 ; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
 IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
+IniRead, potplayerExtList, %A_ScriptDir%\%applicationname%.ini, ExtList, potplayerExtList
 IniRead, screenCaptureSoft, %A_ScriptDir%\%applicationname%.ini, softpath,ScreenCaptureSoft
 
 ;*******************************  read setting file  *******************************{{{
@@ -809,6 +813,13 @@ SetTimer,CheckIdle,60000
 
 	
 Gosub, makeMenu
+; 开机启动
+IfExist,%a_startup%/WINAssist.lnk
+{
+FileDelete,%a_startup%/WINAssist.lnk
+FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk,%a_scriptdir%/
+Menu,more,Check,开机启动
+}
 if ( direct_lock = 1 )
 {
    Gosub, start
@@ -863,14 +874,6 @@ IfNotExist,%A_ScriptDir%/cache/Clips/%a_index%.avc
 Gui, 15: +LastFound +AlwaysOnTop -Caption +ToolWindow
 gui, 15: add, picture,x0 y0 w400 h300 vimagepreview,
 
-
-IfExist,%a_startup%/WINAssist.lnk
-{
-FileDelete,%a_startup%/WINAssist.lnk
-FileCreateShortcut,%A_ScriptFullPath%,%A_Startup%/WINAssist.lnk,%a_scriptdir%/
-Menu,more,Check,开机启动
-}
-
 FileCreateDir,%A_ScriptDir%/cache
 FileCreateDir,%A_ScriptDir%/cache/clips
 FileCreateDir,%A_ScriptDir%/cache/thumbs
@@ -890,6 +893,7 @@ Hotkey,^!c,CopyFile,On
 Hotkey,^!x,CopyFolder,On
 }
 ; Clipjump end
+
 
 ;虚拟桌面
 ; ***** initialization *****
@@ -4002,7 +4006,7 @@ startunlock:
 		temptime+=-1,Minutes
          SetTimer, CheckIdle, On
 
-         return
+         break
       }
    }
 EmptyMem()   
@@ -5591,7 +5595,9 @@ InitHIconStruct()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Clipjump begin;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+; in_back:粘贴模式下是否向前切换剪切板
+; cursave:当前保存的剪切板个数
+; tempsave:当前剪切板,向后切换时减1
 paste:
 gui, 15: hide
 caller := false
@@ -5610,6 +5616,7 @@ IfNotExist,%A_ScriptDir%/cache/clips/%tempsave%.avc
 	Tooltip
 	caller := true
 	; Reload
+	fileappend ,[%a_now%] paste cursave: %cursave%  tempsave: %tempsave%  caller: %caller% `n, %a_scriptdir%\cache\err.log
 }
 else
 {
@@ -5618,9 +5625,11 @@ else
 	Hotkey,^Space,Fixate,On
 	Hotkey,^S,Ssuspnd,On
 
+; 读取保存了clipboardall的文件
 	fileread,Clipboard,*c %A_ScriptDir%/cache/clips/%tempsave%.avc
 	gosub, fixcheck
 	realclipno := cursave - tempsave + 1
+	; 剪切板为空是图片？
 	ifequal,clipboard
 	{
 		Tooltip, Clip %realclipno% of %cursave% %fixstatus%
@@ -5644,13 +5653,6 @@ else
 	tempsave-=1
 	If (tempsave == 0)
 		tempsave := cursave
-}
-
-if fileappendErr
-{
-StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] Paste cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 return
 
@@ -5682,8 +5684,7 @@ If errlvl = 1
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] err1 cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%a_now%] err1 cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 }
 If errlvl = 2
@@ -5700,8 +5701,7 @@ If errlvl = 2
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] err2 cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%A_now%] err2 cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 }
 tempclipall = 
@@ -5711,8 +5711,7 @@ Tooltip
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] clipchange cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%a_now%] clipchange cursave: %cursave%  tempsave: %tempsave%  caller: %caller%  halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 EmptyMem()
 }
@@ -5799,8 +5798,7 @@ Blocker:
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] blocker cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%A_now%] blocker cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 return
 
@@ -5822,19 +5820,24 @@ else
 return
 
 clipsaver:
-fileappend,%ClipboardAll%,%A_ScriptDir%/cache/clips/%cursave%.avc
+try {
+	fileappend,%ClipboardAll%,%A_ScriptDir%/cache/clips/%cursave%.avc
+} catch e {
+	ToolTip FileAppend error
+	sleep 800
+	ToolTip
+	fileappend ,[%a_now%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% message: " e.message Extra: e.extra`n, %a_scriptdir%\cache\err.log
+}
 if ErrorLevel   ; 也就是说它既不是空值，也不是0.
 {
 	fileappendErr := 1
 	StringLeft,halfclip,Clipboard,200
-	FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-	fileappend ,[%errortime%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+	fileappend ,[%a_now%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 ifnotexist %A_ScriptDir%/cache/clips/%cursave%.avc
 {
 	StringLeft,halfclip,Clipboard,200
-	FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-	fileappend ,[%errortime%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+	fileappend ,[%A_now%] fileappendErr %a_lasterror% cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 
 loop,%cursave%
@@ -5860,8 +5863,7 @@ tempno =
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] clipsaver cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%A_now%] clipsaver cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 return
 
@@ -5905,8 +5907,18 @@ if ctrlstate=u
 				Send, ^v
 				sleep, %generalsleep%
 				Loop
+				{
 					IfExist,cache\clips\%cursave%.avc
 						break
+					else
+					{
+						fileappend ,[%A_now%] ctrlcheckERR cursave: %cursave%  tempsave: %tempsave%  caller: %caller% `n, %a_scriptdir%\cache\err.log
+						ToolTip %cursave%.avc not exist
+						sleep 800
+						ToolTip
+						break
+					}
+				}
 				CopyMessage = Transfered to ClipJump
 			}
 			else
@@ -5922,8 +5934,18 @@ if ctrlstate=u
 				Send, ^v
 				sleep, %generalsleep%
 				Loop
+				{
 					IfExist,cache\clips\%cursave%.avc
 						break
+					else
+					{
+						fileappend ,[%A_now%] ctrlcheckERR cursave: %cursave%  tempsave: %tempsave%  caller: %caller% `n, %a_scriptdir%\cache\err.log
+						ToolTip %cursave%.avc not exist
+						sleep 800
+						ToolTip
+						break
+					}
+				}
 				CopyMessage = Transfered to ClipJump
 				}
 			}
@@ -5941,8 +5963,18 @@ if ctrlstate=u
 			Send, ^v
 			sleep, %generalsleep%
 			Loop
+			{
 				IfExist,cache\clips\%cursave%.avc
 					break
+				else
+				{
+					fileappend ,[%A_now%] ctrlcheckERR cursave: %cursave%  tempsave: %tempsave%  caller: %caller% `n, %a_scriptdir%\cache\err.log
+					ToolTip %cursave%.avc not exist
+					sleep 800
+					ToolTip
+					break
+				}
+			}
 			CopyMessage = Transfered to ClipJump
 			}
 		}
@@ -6009,8 +6041,7 @@ tempsave := cursave
 if fileappendErr
 {
 StringLeft,halfclip,Clipboard,200
- FormatTime, errortime, , yyyy.MM.dd_HH:mm:ss
-fileappend ,[%errortime%] compacter cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
+fileappend ,[%A_now%] compacter cursave: %cursave%  tempsave: %tempsave%  caller: %caller% halfclip: %halfclip%`n, %a_scriptdir%\cache\err.log
 }
 return
 
