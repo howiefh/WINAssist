@@ -259,6 +259,16 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
   <td></td>
  </tr>
  <tr>
+  <td>Ctrl + Alt + 0（零）</td>
+  <td>重启脚本</td>
+  <td></td>
+ </tr>
+ <tr>
+  <td>Shift + Alt + 0（零）</td>
+  <td>禁用热键</td>
+  <td></td>
+ </tr>
+ <tr>
   <td>Win + W</td>
   <td>天气预报</td>
   <td></td>

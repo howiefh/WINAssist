@@ -18,9 +18,36 @@
 
 #Persistent
 
+applicationname := SubStr(A_ScriptName, 1, StrLen(A_ScriptName) - 4)
+IfNotExist,%A_ScriptDir%\%applicationname%.ini
+{
+	tooltip,Not exist %A_ScriptDir%\%applicationname%.ini
+	sleep 1000
+	tooltip 
+	ExitApp
+}
+; 必须初始化数组
+SoftList := Object()
+ExtList := Object()
+loop 
+{
+	IniRead, SoftTemp, %A_ScriptDir%\%applicationname%.ini, softpath,soft_%a_index%
+	IniRead, ExtListTemp, %A_ScriptDir%\%applicationname%.ini, ExtList, ExtList_%a_index%
+	If (SoftTemp = "ERROR")
+      Break
+	SoftList[a_index] := SoftTemp
+	ExtList[a_index] := ExtListTemp
+}
+; IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
+; IniRead, gvimExtList, %A_ScriptDir%\%applicationname%.ini, ExtList,gvimExtList
+; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
+; IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
+; IniRead, potplayerExtList, %A_ScriptDir%\%applicationname%.ini, ExtList, potplayerExtList
+IniRead, screenCaptureSoft, %A_ScriptDir%\%applicationname%.ini, softpath,ScreenCaptureSoft
+
+; HDDMonitor
 HDDMtitle = Drives Leds 
 
-applicationname := SubStr(A_ScriptName, 1, StrLen(A_ScriptName) - 4)
 Menu, THISISASECRETMENU, Add, List&Lines, ListLines
 Menu, THISISASECRETMENU, Add, List&Vars, ListVars
 Menu, THISISASECRETMENU, Add, List&Hotkeys, ListHotkeys
@@ -539,7 +566,9 @@ POPUPMENU(wParam, lParam)
 }
 openWith(win_Class)
 {
-	global GVIM,POTPLAYER,potplayerExtList,gvimExtList   ;SPLAYER
+	global ExtList,SoftList
+	; global GVIM,POTPLAYER,potplayerExtList,gvimExtList   ;SPLAYER
+	is_open_success := 0
 	If (win_Class = "WorkerW"  or win_Class = "CabinetWClass") 		
 	{
 		tempclip=%clipboard%
@@ -548,30 +577,42 @@ openWith(win_Class)
 		Full_FileName=%clipboard%
 		clipboard=%tempclip%
 		SplitPath, Full_FileName, , , ext
-		;msgbox, %ext#If%
-		; if (ext="txt" or ext="c" or ext= "cpp" or ext="html" or ext="ahk" or ext="sql")
-		if ext in %gvimExtList%
+		; 循环查看是否为中键打开功能支持的后缀，是则打开该文件
+		loop % SoftList.maxindex()
 		{
-			; msgbox, %GVIM%
-			run %GVIM% "%Full_FileName%"
-			return
+			if ext in % ExtList[A_Index]
+			{
+				cmd := SoftList[A_Index]
+				run %cmd% "%Full_FileName%"
+				; run % SoftList[A_Index] . " " . Full_FileName
+				is_open_success := 1
+				break
+			}
 		}
-		; else if (ext="wmv" or ext="mp4" or ext="rm" or ext="rmvb" or ext="avi" or ext="mpg" or ext="flv" or ext="swf" or ext="mkv" or ext="mpg" or ext="mpeg")
-		else if ext in %potplayerExtList%
-		{
-			; run %SPLAYER% "%Full_FileName%"
-			run %POTPLAYER% "%Full_FileName%"
-			return
-		}
-		else
+		if (is_open_success == 0)
 		{
 			tooltip, 不支持该类型文件
-		;	sleep,2000
-		;	tooltip
 			SetTimer, RemoveToolTip, 2000
 			return
 		}
-					
+		; if (ext="txt" or ext="c" or ext= "cpp" or ext="html" or ext="ahk" or ext="sql")
+		; if ext in %gvimExtList%
+		; {
+			; run %GVIM% "%Full_FileName%"
+			; return
+		; }
+		; else if (ext="wmv" or ext="mp4" or ext="rm" or ext="rmvb" or ext="avi" or ext="mpg" or ext="flv" or ext="swf" or ext="mkv" or ext="mpg" or ext="mpeg")
+		; else if ext in %potplayerExtList%
+		; {
+			; run %POTPLAYER% "%Full_FileName%"
+			; return
+		; }
+		; else
+		; {
+			; tooltip, 不支持该类型文件
+			; SetTimer, RemoveToolTip, 2000
+			; return
+		; }
 	}
 }
 ;******************************* function  *******************************}}}
@@ -585,20 +626,6 @@ if_on_top=0
 
 thundernum=0
 
-
-IfNotExist,%A_ScriptDir%\%applicationname%.ini
-{
-	tooltip,Not exist %A_ScriptDir%\%applicationname%.ini
-	sleep 1000
-	tooltip 
-	ExitApp
-}
-IniRead, GVIM, %A_ScriptDir%\%applicationname%.ini, softpath,GVIM
-IniRead, gvimExtList, %A_ScriptDir%\%applicationname%.ini, ExtList,gvimExtList
-; IniRead, SPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,SPLAYER
-IniRead, POTPLAYER, %A_ScriptDir%\%applicationname%.ini, softpath,POTPLAYER
-IniRead, potplayerExtList, %A_ScriptDir%\%applicationname%.ini, ExtList, potplayerExtList
-IniRead, screenCaptureSoft, %A_ScriptDir%\%applicationname%.ini, softpath,ScreenCaptureSoft
 
 ;*******************************  read setting file  *******************************{{{
 	
@@ -1105,6 +1132,8 @@ EmptyMem()
 return
 
 !0::ExitApp
+!*0::reload
+!+0::suspend toggle
 
 ;******************************* Tray Menu *******************************{{{
 makeMenu:
@@ -4016,38 +4045,39 @@ inputoff:
 ; 禁用热键及一些功能键
 	suspend on
 	BlockInput, MouseMove
-	Hotkey, Lbutton, stop, on
-	Hotkey, Rbutton, stop, on
-	Hotkey, Mbutton, stop, on
-	Hotkey, LWin, stop, on
-	Hotkey, Rwin, stop, on
-	Hotkey, LAlt, stop, on
-	Hotkey, RAlt, stop, on
-	Hotkey, Ctrl, stop, on
-	Hotkey, esc, stop, on
-	Hotkey, del, stop, on
-	Hotkey, f1, stop, on
-	Hotkey, f4, stop, on
-	Hotkey, tab, stop, on
+	; 和suspend有冲突
+	; Hotkey, Lbutton, stop, on
+	; Hotkey, Rbutton, stop, on
+	; Hotkey, Mbutton, stop, on
+	; Hotkey, LWin, stop, on
+	; Hotkey, Rwin, stop, on
+	; Hotkey, LAlt, stop, on
+	; Hotkey, RAlt, stop, on
+	; Hotkey, Ctrl, stop, on
+	; Hotkey, esc, stop, on
+	; Hotkey, del, stop, on
+	; Hotkey, f1, stop, on
+	; Hotkey, f4, stop, on
+	; Hotkey, tab, stop, on
 return
 
 inputon:
 ; 启用热键及一些功能键
 	suspend off
 	blockinput, mousemoveoff
-	hotkey, lbutton, stop, off
-	hotkey, rbutton, stop, off
-	hotkey, mbutton, stop, off
-	hotkey, lwin, stop, off
-	hotkey, rwin, stop, off
-	hotkey, lalt, stop, off
-	hotkey, ralt, stop, off
-	Hotkey, Ctrl, stop, off
-	Hotkey, esc, stop, off
-	Hotkey, del, stop, off
-	Hotkey, f1, stop, off
-	Hotkey, f4, stop, off
-	Hotkey, tab, stop, off
+	; hotkey, lbutton, stop, off
+	; hotkey, rbutton, stop, off
+	; hotkey, mbutton, stop, off
+	; hotkey, lwin, stop, off
+	; hotkey, rwin, stop, off
+	; hotkey, lalt, stop, off
+	; hotkey, ralt, stop, off
+	; Hotkey, Ctrl, stop, off
+	; Hotkey, esc, stop, off
+	; Hotkey, del, stop, off
+	; Hotkey, f1, stop, off
+	; Hotkey, f4, stop, off
+	; Hotkey, tab, stop, off
 return
 
 stop:
@@ -5803,7 +5833,7 @@ fileappend ,[%A_now%] blocker cursave: %cursave%  tempsave: %tempsave%  caller: 
 return
 
 Fixate:
-IfExist,cache\fixate\%realactive%.fxt
+IfExist,%A_ScriptDir%\cache\fixate\%realactive%.fxt
 {
 	fixstatus := ""
 	FileDelete,%A_ScriptDir%\cache\fixate\%realactive%.fxt
@@ -5843,19 +5873,19 @@ ifnotexist %A_ScriptDir%/cache/clips/%cursave%.avc
 loop,%cursave%
 {
 tempno := cursave - a_index + 1
-IfExist,cache\fixate\%tempno%.fxt
+IfExist,%A_ScriptDir%\cache\fixate\%tempno%.fxt
 {
 	t_tempno := tempno + 1
-	FileMove,cache\clips\%t_tempno%.avc,cache\clips\%t_tempno%_a.avc
-	FileMove,cache\clips\%tempno%.avc,cache\clips\%t_tempno%.avc
-	FileMove,cache\clips\%t_tempno%_a.avc,cache\clips\%tempno%.avc
-	IfExist,cache\thumbs\%tempno%.jpg
+	FileMove,%A_ScriptDir%\cache\clips\%t_tempno%.avc,%A_ScriptDir%\cache\clips\%t_tempno%_a.avc
+	FileMove,%A_ScriptDir%\cache\clips\%tempno%.avc,%A_ScriptDir%\cache\clips\%t_tempno%.avc
+	FileMove,%A_ScriptDir%\cache\clips\%t_tempno%_a.avc,%A_ScriptDir%\cache\clips\%tempno%.avc
+	IfExist,%A_ScriptDir%\cache\thumbs\%tempno%.jpg
 	{
-		FileMove,cache\thumbs\%t_tempno%.jpg,cache\thumbs\%t_tempno%_a.jpg
-		FileMove,cache\thumbs\%tempno%.jpg,cache\thumbs\%t_tempno%.jpg
-		FileMove,cache\thumbs\%t_tempno%_a.jpg,cache\thumbs\%tempno%.jpg
+		FileMove,%A_ScriptDir%\cache\thumbs\%t_tempno%.jpg,%A_ScriptDir%\cache\thumbs\%t_tempno%_a.jpg
+		FileMove,%A_ScriptDir%\cache\thumbs\%tempno%.jpg,%A_ScriptDir%\cache\thumbs\%t_tempno%.jpg
+		FileMove,%A_ScriptDir%\cache\thumbs\%t_tempno%_a.jpg,%A_ScriptDir%\cache\thumbs\%tempno%.jpg
 	}
-	FileMove,cache\fixate\%tempno%.fxt,cache\fixate\%t_tempno%.fxt
+	FileMove,%A_ScriptDir%\cache\fixate\%tempno%.fxt,%A_ScriptDir%\cache\fixate\%t_tempno%.fxt
 }
 }
 t_tempno =
@@ -5868,7 +5898,7 @@ fileappend ,[%A_now%] clipsaver cursave: %cursave%  tempsave: %tempsave%  caller
 return
 
 fixcheck:
-IfExist,cache\fixate\%tempsave%.fxt
+IfExist,%A_ScriptDir%\cache\fixate\%tempsave%.fxt
 	fixstatus := "[FIXED]"
 else
 	fixstatus := ""
@@ -5908,7 +5938,7 @@ if ctrlstate=u
 				sleep, %generalsleep%
 				Loop
 				{
-					IfExist,cache\clips\%cursave%.avc
+					IfExist,%A_ScriptDir%\cache\clips\%cursave%.avc
 						break
 					else
 					{
@@ -5935,7 +5965,7 @@ if ctrlstate=u
 				sleep, %generalsleep%
 				Loop
 				{
-					IfExist,cache\clips\%cursave%.avc
+					IfExist,%A_ScriptDir%\cache\clips\%cursave%.avc
 						break
 					else
 					{
@@ -5964,7 +5994,7 @@ if ctrlstate=u
 			sleep, %generalsleep%
 			Loop
 			{
-				IfExist,cache\clips\%cursave%.avc
+				IfExist,%A_ScriptDir%\cache\clips\%cursave%.avc
 					break
 				else
 				{
@@ -6047,9 +6077,9 @@ return
 
 cleardata:
 LastClip := 
-FileDelete,cache\clips\*.avc
-FileDelete,cache\thumbs\*.jpg
-FileDelete,cache\fixate\*.fxt
+FileDelete,%A_ScriptDir%\cache\clips\*.avc
+FileDelete,%A_ScriptDir%\cache\thumbs\*.jpg
+FileDelete,%A_ScriptDir%\cache\fixate\*.fxt
 ; howiefh
 IniWrite,%lastclip%,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 ; howiefh
@@ -6059,9 +6089,9 @@ return
 
 clearclip:
 LastClip := 
-FileDelete,cache\clips\%realactive%.avc
-FileDelete,cache\thumbs\%realactive%.jpg
-FileDelete,cache\fixate\%realactive%.fxt
+FileDelete,%A_ScriptDir%\cache\clips\%realactive%.avc
+FileDelete,%A_ScriptDir%\cache\thumbs\%realactive%.jpg
+FileDelete,%A_ScriptDir%\cache\fixate\%realactive%.fxt
 ; howiefh
 IniWrite,%lastclip%,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 ; howiefh
