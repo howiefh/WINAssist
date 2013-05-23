@@ -129,8 +129,8 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
   <td>555</td>
  </tr>
  <tr>
-  <td>中键(资源管理器中)</td>
-  <td>用gvim、potplayer打开文件</td>
+  <td>Ctrl + O（是字母O）或中键单击(资源管理器中)</td>
+  <td>用其它程序打开文件</td>
   <td>556</td>
  </tr>
  <tr>
@@ -256,6 +256,16 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
  <tr>
   <td>Alt + 0（零）</td>
   <td>退出脚本</td>
+  <td></td>
+ </tr>
+ <tr>
+  <td>Ctrl + Alt + 0（零）</td>
+  <td>重启脚本</td>
+  <td></td>
+ </tr>
+ <tr>
+  <td>Shift + Alt + 0（零）</td>
+  <td>禁用热键</td>
   <td></td>
  </tr>
  <tr>
