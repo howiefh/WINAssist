@@ -939,7 +939,17 @@ Gui, 2:Add, Picture, x0 y0, d:\Program Files\Autohotkey\Scripts\banner.png
 Gui, 2:Add, Text, x15 y5 w70 +BackgroundTrans vString
 
 ; WeatherForecast 天气预报
-weatherInfoUpdate = 0
+FormatTime, today, , dddd 
+weeks := Object(0,"星期日",1,"星期一",2,"星期二",3,"星期三",4,"星期四",5,"星期五",6,"星期六")
+for key in weeks
+{
+	; key 为 today 在 weeks 中的 index
+	if (weeks[key] == today)
+		break
+}
+
+weatherInfoUpdate := 0
+initWeatherInfo := 0
 Gosub weatherINIREAD
 
 ; Shows clock, batterypower, mem load and cpu load on top of screen
@@ -4449,6 +4459,7 @@ Syear(year) {
 		return 1
 	return 0
 }
+
 ; 获取下一天的日期
 nextDate(ByRef year,ByRef month,ByRef day) {
 	days := Object(1,31,2,28,3,31,4,30,5,31,6,30,7,31,8,31,9,30,10,31,11,30,12,31)
@@ -4472,21 +4483,28 @@ nextDate(ByRef year,ByRef month,ByRef day) {
 ; 根据ip获取id
 getCityID()
 {
-idResult := URLDownloadToVar("http://61.4.185.48:81/g/")
-if RegExMatch(idResult, "var id=(\d*)", idResult)
-	Return idResult1
-return 0
+	idResult := URLDownloadToVar("http://61.4.185.48:81/g/")
+	if RegExMatch(idResult, "var id=(\d*)", idResult)
+	{
+		Return idResult1
+	}
+	return 0
 }
 ; 检测网络连接
 InternetCheckConnection(Url="",FIFC=1) { 
-	Return DllCall("Wininet.dll\InternetCheckConnectionA", Str,Url, Int,FIFC, Int,0) 
+	if %A_IsUnicode%
+		Return DllCall("Wininet.dll\InternetCheckConnectionW", Str,Url, Int,FIFC, Int,0) 
+	else 
+		Return DllCall("Wininet.dll\InternetCheckConnectionA", Str,Url, Int,FIFC, Int,0) 
 }
 
 
 makeWeatherMenu:
 Menu, weatherForecast, Add, 自动获取ID, toggleAutoGetId
 Menu, weatherForecast, Add, 设置ID, setCityID 
+Menu, weatherForecast, Add, 设置显示延时, setDelay
 Menu, weatherForecast, Add, 显示的天数, setShowDayCount 
+menu, weatherForecast, add, 更新天气数据, updateWeatherInfo
 menu, tray , add , 天气预报,:weatherForecast
 return
 
@@ -4507,13 +4525,27 @@ setCityID:
    }
 return
 
+setDelay:
+InputBox, new_var, 请输入显示延时, , , 240, 100
+   if NOT ErrorLevel
+   {
+       delay := new_var
+	   if ( delay <= 0 or delay > 5000 or delay/500 == 0)
+		{
+			delay := 2000
+			Iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings, delay
+		}
+	   iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings,delay
+   }
+return
+
 setShowDayCount:
    InputBox, new_var, 请输入要显示的天数（1~6天）, , , 240, 100
    if NOT ErrorLevel
    {
 		if(new_var < 1 or new_var >6)
 			new_var = 3
-      IniWrite, %new_var%,%a_scriptdir%\%applicationname%.ini, weatherSettings, showDayCount
+      IniWrite, %new_var%, %a_scriptdir%\%applicationname%.ini, weatherSettings, showDayCount
       showDayCount := new_var
 	  Gosub getWeatherForecast
    }
@@ -4532,9 +4564,15 @@ toggleAutoGetId:
         Menu, weatherForecast, Check, 自动获取ID
 		menu, weatherForecast, disable, 设置ID
 		cityId := getCityID()
+		iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
 		Gosub getWeatherForecast
     }
 	iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
+Return
+
+updateWeatherInfo:
+GoSub getWeatherForecast
+GoSub showWeatherForecast
 Return
 
 weatherINIREAD:
@@ -4543,12 +4581,16 @@ IfNotExist,%a_scriptdir%\%applicationname%.ini
 	autoGetCityId := 1 
 	showDayCount := 3
 	cityId := getCityID()
+	delay := 2000
 	Gosub,weatherINIWRITE
 	return
 }
 IniRead,autoGetCityId,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 if(autoGetCityId == 1)
+{
 	cityId := getCityID()
+	iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+}
 else
 	IniRead,cityId,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
 IniRead,showDayCount,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
@@ -4556,6 +4598,12 @@ if ( showDayCount < 1 or showDayCount > 6)
 {
 	showDayCount := 3
 	Iniwrite,%showDayCount%,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
+}
+IniRead,delay,%a_scriptdir%\%applicationname%.ini,weatherSettings,delay
+if ( delay <= 0 or delay > 5000 or delay/1000 == 0)
+{
+	delay := 2000
+	Iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings, delay
 }
 if %autoGetCityId%
 {
@@ -4568,6 +4616,7 @@ weatherINIWRITE:
 iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
 Iniwrite,%showDayCount%,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
+Iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings, delay
 Return
 
 
@@ -4577,24 +4626,29 @@ if(cityId == 0)
 	cityId := getCityID()
 	if(cityId == 0)
 		return
+	else
+		iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
 }
 ; 获取 json 格式的天气预报
 ; http://jerryqiu.iteye.com/blog/1106241
 ; http://www.dream798.com/default.php?page=Display_Info&id=297
 ; http://service.weather.com.cn/plugin/forcast.shtml?id=pn11#
-; 西安
+; for utf-8
+; weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . cityId . ".html" ,"UTF-8")
 weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . cityId . ".html")
 ; 失败
 if ( weatherResult == 0)
 {
 	return
 }
-;  weatherResult := URLDownloadToVar("http://www.weather.com.cn/data/cityinfo/101100104.html")
+weatherInfoUpdate = 1
+
 ; 转码
 ; UTF82Ansi 函数见 http://ahk.5d6d.com/thread-1123-1-1.html
-; 另外不知为何用 URLDownloadToVar 下载下来少了最后 2 个大括号, 手动补上
- ; weatherResult := UTF82Ansi( weatherResult) . "}}"
- weatherResult := UTF82Ansi( weatherResult)
+if A_IsUnicode != 1
+{
+	weatherResult := UTF82Ansi(weatherResult)
+}
 ; 用 json 提取数据, 和 javascript 类似
 city := json(weatherResult, "weatherinfo.city")
 city_en := json(weatherResult, "weatherinfo.city_en")
@@ -4611,17 +4665,17 @@ loop, %showDayCount%
 {
 	weather := json(weatherResult, "weatherinfo.weather" . a_index)
 	temp := json(weatherResult, "weatherinfo.temp" . a_index)
-	showWeather .= Date_month . "." . Date_day . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
+	showWeather .= Date_month . "." . Date_day . "(" . weeks[mod(key++, 7)] . ")" . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
 	if ( a_index < showDayCount)
 	{
 		showWeather .=  "`n"
 		nextDate(Date_year, Date_month, Date_day)
 	}
 }
-if(weatherInfoUpdate == 0 and city  <> "")
+if (initWeatherInfo == 0 and city <> "")
 {
 	GoSub showWeatherForecast
-	weatherInfoUpdate = 1
+	initWeatherInfo = 1
 }
 Return
 
@@ -4631,7 +4685,7 @@ Return
 ; 输出
 showWeatherForecast:
 ; 还没有获取天气信息
-; city 为空说明 getWeatherForecast 未正常执行完，否则不显示
+; city 为空说明 getWeatherForecast 未正常执行完，否则显示
 if (city == "")
 {
 	; http://www.autohotkey.com/community/viewtopic.php?t=22293
@@ -4651,10 +4705,12 @@ if (city == "")
 else 
 {
 	ToolTip, % city  "(" city_en ")" "`n"  date_y "	"  week "`n" showWeather
-	Sleep, 2000
+	Sleep, %delay%
 	ToolTip
 	Return
 }
+
+
 
 ;******************************* 天气预报 *******************************
 

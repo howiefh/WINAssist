@@ -1,4 +1,5 @@
 *~
+*.vbs
 others/
 soft/clph.exe
 cache/
