@@ -941,10 +941,10 @@ Gui, 2:Add, Text, x15 y5 w70 +BackgroundTrans vString
 ; WeatherForecast 天气预报
 FormatTime, today, , dddd 
 weeks := Object(0,"星期日",1,"星期一",2,"星期二",3,"星期三",4,"星期四",5,"星期五",6,"星期六")
-for key in weeks
+for WF_key in weeks
 {
 	; key 为 today 在 weeks 中的 index
-	if (weeks[key] == today)
+	if (weeks[WF_key] == today)
 		break
 }
 
@@ -4055,6 +4055,7 @@ inputoff:
 ; 禁用热键及一些功能键
 	suspend on
 	BlockInput, MouseMove
+
 	; 和suspend有冲突
 	; Hotkey, Lbutton, stop, on
 	; Hotkey, Rbutton, stop, on
@@ -4075,6 +4076,7 @@ inputon:
 ; 启用热键及一些功能键
 	suspend off
 	blockinput, mousemoveoff
+
 	; hotkey, lbutton, stop, off
 	; hotkey, rbutton, stop, off
 	; hotkey, mbutton, stop, off
@@ -4665,7 +4667,7 @@ loop, %showDayCount%
 {
 	weather := json(weatherResult, "weatherinfo.weather" . a_index)
 	temp := json(weatherResult, "weatherinfo.temp" . a_index)
-	showWeather .= Date_month . "." . Date_day . "(" . weeks[mod(key++, 7)] . ")" . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
+	showWeather .= Date_month . "." . Date_day . "(" . weeks[mod(WF_key++, 7)] . ")" . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
 	if ( a_index < showDayCount)
 	{
 		showWeather .=  "`n"
