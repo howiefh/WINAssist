@@ -1143,7 +1143,7 @@ return
 
 !0::ExitApp
 !*0::reload
-!+0::suspend toggle
+!+1::suspend toggle
 
 ;******************************* Tray Menu *******************************{{{
 makeMenu:
@@ -4455,8 +4455,9 @@ EmptyMem()
 return
 ;*******************************  在当前位置打开cmd  *******************************
 ;******************************* 天气预报 *******************************
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Functions;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 判断是否闰年
 Syear(year) {
-	; 是闰年
 	if( !mod(year, 400) or !mod(year, 4) and mod(year, 100)) 
 		return 1
 	return 0
@@ -4499,8 +4500,33 @@ InternetCheckConnection(Url="",FIFC=1) {
 	else 
 		Return DllCall("Wininet.dll\InternetCheckConnectionA", Str,Url, Int,FIFC, Int,0) 
 }
+; 设置City ID
+; WF_data: json内容
+; s: 解析的路径,最后一个[]前的部分
+; return: 返回城市列表
+SelectArea(ByRef WF_data,s){
+	WF_CityList := "--"
+	loop
+	{
+		WF_temp := json(WF_data,s . "[" . a_index-1 . "].name")
+		
+		if (WF_temp == "")
+		{ 
+			break
+		}
+		if (a_index == 1)
+		{
+			WF_CityList := WF_temp
+		}
+		else {
+			WF_CityList := WF_CityList . "|" . WF_temp
+		}
+	}
+	return WF_CityList
+}
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Labels;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 菜单
 makeWeatherMenu:
 Menu, weatherForecast, Add, 自动获取ID, toggleAutoGetId
 Menu, weatherForecast, Add, 设置ID, setCityID 
@@ -4510,23 +4536,7 @@ menu, weatherForecast, add, 更新天气数据, updateWeatherInfo
 menu, tray , add , 天气预报,:weatherForecast
 return
 
-setCityID:
-   InputBox, new_var, 请输入城市ID, , , 240, 100
-   if NOT ErrorLevel
-   {
-      cityId := new_var
-	  Gosub getWeatherForecast
-	  if(city == "")
-	  {
-		  msgbox, 输入的ID可能有误!
-	  }
-	  else
-	  {
-		   iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
-	  }
-   }
-return
-
+; 设置显示天气延时
 setDelay:
 InputBox, new_var, 请输入显示延时, , , 240, 100
    if NOT ErrorLevel
@@ -4540,7 +4550,7 @@ InputBox, new_var, 请输入显示延时, , , 240, 100
 	   iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings,delay
    }
 return
-
+; 设置显示天数
 setShowDayCount:
    InputBox, new_var, 请输入要显示的天数（1~6天）, , , 240, 100
    if NOT ErrorLevel
@@ -4552,7 +4562,7 @@ setShowDayCount:
 	  Gosub getWeatherForecast
    }
 return
-
+; 自动获取城市ID开关
 toggleAutoGetId:
     if %autoGetCityId%
     {
@@ -4565,24 +4575,24 @@ toggleAutoGetId:
         autoGetCityId = 1
         Menu, weatherForecast, Check, 自动获取ID
 		menu, weatherForecast, disable, 设置ID
-		cityId := getCityID()
-		iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+		WF_CityID := getCityID()
+		iniwrite,%WF_CityID%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
 		Gosub getWeatherForecast
     }
 	iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 Return
-
+; 更新天气信息 并显示
 updateWeatherInfo:
 GoSub getWeatherForecast
 GoSub showWeatherForecast
 Return
-
+; 读配置文件
 weatherINIREAD:
 IfNotExist,%a_scriptdir%\%applicationname%.ini
 {
 	autoGetCityId := 1 
 	showDayCount := 3
-	cityId := getCityID()
+	WF_CityID := getCityID()
 	delay := 2000
 	Gosub,weatherINIWRITE
 	return
@@ -4590,11 +4600,11 @@ IfNotExist,%a_scriptdir%\%applicationname%.ini
 IniRead,autoGetCityId,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
 if(autoGetCityId == 1)
 {
-	cityId := getCityID()
-	iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+	WF_CityID := getCityID()
+	iniwrite,%WF_CityID%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
 }
 else
-	IniRead,cityId,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+	IniRead,WF_CityID,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
 IniRead,showDayCount,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
 if ( showDayCount < 1 or showDayCount > 6)
 {
@@ -4613,31 +4623,31 @@ if %autoGetCityId%
 	menu, weatherForecast, disable, 设置ID
 }
 Return
-
+; 写配置文件
 weatherINIWRITE:
 iniwrite,%autoGetCityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings, autoGetCityId
-iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+iniwrite,%WF_CityID%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
 Iniwrite,%showDayCount%,%a_scriptdir%\%applicationname%.ini,weatherSettings,showDayCount
 Iniwrite,%delay%,%a_scriptdir%\%applicationname%.ini,weatherSettings, delay
 Return
 
-
+; 获取天气预报信息
 getWeatherForecast:
-if(cityId == 0)
+if(WF_CityID == 0)
 {
-	cityId := getCityID()
-	if(cityId == 0)
+	WF_CityID := getCityID()
+	if(WF_CityID == 0)
 		return
 	else
-		iniwrite,%cityId%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityId
+		iniwrite,%WF_CityID%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
 }
 ; 获取 json 格式的天气预报
 ; http://jerryqiu.iteye.com/blog/1106241
 ; http://www.dream798.com/default.php?page=Display_Info&id=297
 ; http://service.weather.com.cn/plugin/forcast.shtml?id=pn11#
 ; for utf-8
-; weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . cityId . ".html" ,"UTF-8")
-weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . cityId . ".html")
+; weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . WF_CityID . ".html","UTF-8")
+weatherResult := URLDownloadToVar("http://m.weather.com.cn/data/" . WF_CityID . ".html")
 ; 失败
 if ( weatherResult == 0)
 {
@@ -4667,7 +4677,7 @@ loop, %showDayCount%
 {
 	weather := json(weatherResult, "weatherinfo.weather" . a_index)
 	temp := json(weatherResult, "weatherinfo.temp" . a_index)
-	showWeather .= Date_month . "." . Date_day . "(" . weeks[mod(WF_key++, 7)] . ")" . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
+	showWeather .= Date_month . "." . Date_day . "(" . weeks[mod(key++, 7)] . ")" . ": " . json(weatherResult, "weatherinfo.weather" . a_index) . " " . json(weatherResult, "weatherinfo.temp" . a_index) 
 	if ( a_index < showDayCount)
 	{
 		showWeather .=  "`n"
@@ -4711,9 +4721,52 @@ else
 	ToolTip
 	Return
 }
+return
 
+; 设置City ID
+setCityID:
+makeSelectCityIDGUI:
+fileread WF_data, %A_ScriptDir%\data\cityID.json
+WF_CityList := SelectArea(WF_data,"root.area")
+Gui, 17: Add, DropDownList, x12 y40 w100 h20 R5 gSelectedArea1 vSelectedAreaVar1 AltSubmit, %WF_CityList%
+Gui, 17: Add, DropDownList, x132 y40 w100 h20 R5 gSelectedArea2 vSelectedAreaVar2 AltSubmit, --
+Gui, 17: Add, DropDownList, x252 y40 w100 h20 R5 gSelectedArea3 vSelectedAreaVar3 AltSubmit, --
+Gui, 17: Add, Button, x372 y40 w90 h30 gWF_OK, 确定
+Gui, 17: Add, Text, x12 y80 w340 h30 vWF_selectedCity,
+Gui, 17: Show, w475 h128, 选择城市
+return
 
+;第一个下拉菜单选择后执行
+SelectedArea1:
+; gui 不能隐藏
+Gui, 17: Submit,NoHide
+WF_CityList := SelectArea(WF_data,"root.area[" . SelectedAreaVar1-1 . "].area")
+guicontrol, 17:, SelectedAreaVar2,|%WF_CityList%
+return
+;第二个下拉菜单选择后执行
+SelectedArea2:
+Gui, 17: Submit,NoHide
+WF_CityList := SelectArea(WF_data,"root.area[" . SelectedAreaVar1-1 . "].area[" . SelectedAreaVar2-1 . "].city")
+guicontrol, 17:, SelectedAreaVar3,|%WF_CityList%
+return
+;第三个下拉菜单选择后执行
+SelectedArea3:
+Gui, 17: Submit,NoHide
+return
+;点击确定按钮
+WF_OK:
+; 获取id
+WF_CityID := json(WF_data,"root.area[" . SelectedAreaVar1-1 . "].area[" . SelectedAreaVar2-1 . "].city[" . SelectedAreaVar3-1 . "].id")
+; 获取城市名
+WF_CityName := json(WF_data,"root.area[" . SelectedAreaVar1-1 . "].area[" . SelectedAreaVar2-1 . "].city[" . SelectedAreaVar3-1 . "].name")
+guicontrol, 17:, WF_selectedCity, 您选择的城市是: %WF_CityName%  ID是: %WF_CityID%
+Gosub getWeatherForecast
+iniwrite,%WF_CityID%,%a_scriptdir%\%applicationname%.ini,weatherSettings,cityID
+return
 
+17GuiClose:
+gui, 17:destroy
+return
 ;******************************* 天气预报 *******************************
 
 ;-------------------------------------------------------------------------------
