@@ -13,6 +13,7 @@
 #Include include/convertCodepage.ahk
 ;ClipJump
 #Include include/imagelib.ahk
+#Include include/HotkeyParser.ahk
 #include include/gdiplus.ahk
 #SingleInstance,Force
 
@@ -26,6 +27,7 @@ IfNotExist,%A_ScriptDir%\%applicationname%.ini
 	tooltip 
 	ExitApp
 }
+; 中键打开文件
 ; 必须初始化数组
 SoftList := Object()
 ExtList := Object()
@@ -444,7 +446,12 @@ SendToDesktop(windowID, newDesktop)
 ; sends the currently active window to the given desktop
 SendActiveToDesktop(newDesktop)
 {
+   global
    WinGet, id, ID, A
+   if (newDesktop == curDesktop)
+   {
+	   return
+   }
    SendToDesktop(id, newDesktop)
    EmptyMem()
 }
@@ -668,6 +675,8 @@ IniRead, Fn0563_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0563
 IniRead, Fn0564_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0564
 IniRead, Fn0565_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0565
 IniRead, Fn0566_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0566
+IniRead, Fn0567_V, %A_ScriptDir%\%applicationname%.ini, FnSwitch, Fn0567
+
 
 ;#★★Clipjump★
 ; Clipboard = 
@@ -683,7 +692,42 @@ IniRead,R_lf,%A_ScriptDir%\%applicationname%.ini,Clipjump,Remove_Ending_Linefeed
 Iniread,generalsleep,%A_ScriptDir%\%applicationname%.ini,Clipjump,Wait_Key
 Iniread,lastclip,%A_ScriptDir%\cache\%applicationname%cache.txt,Clipjump,lastclip
 }
+; ScreenCapture
+If (FnSwitch(0567)=1)
+{
+IfNotExist, %a_scriptdir%\%applicationname%.ini
+{
+	iniwrite,jpg,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Extension_To_Save_in
+	iniwrite,100,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Quality_of_clips
+	iniwrite,1,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Action_After_Finish
+	iniwrite,mspaint.exe,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Open_Capture_Soft
+	IniWrite,"" ,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Capture_Directory
+	iniwrite,PrintScreen,%a_scriptdir%\%applicationname%.ini,ScreenCapture,PrimaryKey
+	IniWrite,LeftMousebutton,%a_scriptdir%\%applicationname%.ini,ScreenCapture,SecondaryKey
+	IniWrite,CB2322,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Color
+}
+;-----------------------CONFIGURE--------------------------------------------------------------------
+IniRead,SC_CaptureExtension,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Extension_To_Save_in
+IniRead,SC_qualityofpic,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Quality_of_clips
+IniRead,SC_actionafterfinish,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Action_After_Finish
+IniRead,SC_openCaptureSoft,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Open_Capture_Soft
+IniRead,SC_CaptureDir,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Capture_Directory
+IniRead,SC_PrimaryHotkey,%a_scriptdir%\%applicationname%.ini,ScreenCapture,PrimaryKey
+IniRead,SC_SecondaryHotkey,%a_scriptdir%\%applicationname%.ini,ScreenCapture,SecondaryKey
+IniRead,SC_CaptureGuiColor,%a_scriptdir%\%applicationname%.ini,ScreenCapture,Color
 
+if SC_CaptureDir = 
+	SC_CaptureDir = %a_scriptdir%\cache\Captures
+splitpath, SC_CaptureDir,SC_captureDirName
+
+IfEqual,SC_actionafterfinish,0
+	SC_actionafterfinish := 
+else
+	SC_actionafterfinish := True
+
+SC_PrimaryHotkey := (HParse(SC_PrimaryHotkey) == "") ? ("PrintScreen") : (Hparse(SC_PrimaryHotkey))
+SC_SecondaryHotkey := (HParse(SC_SecondaryHotkey) == "") ? ("LButton") : (Hparse(SC_SecondaryHotkey))
+}
 ;#★★★鼠标手势★★★
 IniRead, IE_Gesture_Back, %A_ScriptDir%\%applicationname%.ini, Gesture,IE_Gesture_Back
 IniRead, IE_Gesture_Forward, %A_ScriptDir%\%applicationname%.ini, Gesture,IE_Gesture_Forward
@@ -921,6 +965,10 @@ Hotkey,^!x,CopyFolder,On
 }
 ; Clipjump end
 
+; ScreenCapture
+If (FnSwitch(0567)=1){
+	Hotkey,%SC_PrimaryHotkey%,capture,On
+}
 
 ;虚拟桌面
 ; ***** initialization *****
@@ -1177,6 +1225,10 @@ GoSub makeWeatherMenu
 If (FnSwitch(0565)=1)
 {
 GoSub makeClipJumpMenu
+}
+If (FnSwitch(0567)=1)
+{
+GoSub makeScreenCaptureMenu
 }
 ;子菜单
 Menu, tray, add ; 创建分割线。
@@ -1635,28 +1687,37 @@ SHOW_FILES:
 ;HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH   隐藏文件   结束   HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ;
 	
 
-;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn  新建文件夹  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn 
+;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn  新建文件夹\文件  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn 
+; CreateNewFolder
 #If (FnSwitch(0118)=1)
 $#n::
-KeyWait,LWin
-KeyWait,RWin
 If WinActive("ahk_group WinGroup")
 ;if (WinActive("ahk_class CabinetWClass") or WinActive("ahk_class ExploreWClass"))
 {
-		BlockInput On
-					temp0=%ClipBoard%
-					sleep,20
-					FormatTime, CurrentDateTime,, yyyy-MM-dd [HH.mm.ss]
-					ClipBoard=%CurrentDateTime%
-					send ^+n ; 新建文件夹
-					sleep,500
-					send,^v
-					sleep,200
-					send,^a
-					sleep,100
-					ClipBoard=%temp0%
-		BlockInput Off
-	
+	CNF_folder := GetFolder()
+	FormatTime, CurrentDateTime,, yyyy-MM-dd [HH.mm.ss]
+	IfNotEqual,CNF_folder
+	{
+		CNF_folder .= "\" . CurrentDateTime
+		FileCreateDir %CNF_folder%
+	}
+}
+else
+	send,#n
+EmptyMem()
+return
+; CreateNewFile
+$#!n::
+If WinActive("ahk_group WinGroup")
+;if (WinActive("ahk_class CabinetWClass") or WinActive("ahk_class ExploreWClass"))
+{
+	CNF_file := GetFolder()
+	FormatTime, CurrentDateTime,, yyyy-MM-dd [HH.mm.ss]
+	IfNotEqual,CNF_folder
+	{
+		CNF_file .= "\" . CurrentDateTime . ".txt"
+		FileAppend , , %CNF_file%
+	}
 }
 else
 	send,#n
@@ -1664,7 +1725,7 @@ EmptyMem()
 return
 #If
 ;;;;;The end #IF tag of FnSwitch 0118
-;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn  新建文件夹  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn 
+;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn  新建文件夹\文件  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn 
 	
 ;oooooooooooooooooooooooooooooooo 打开c、d、e……盘 oooooooooooooooooooooooooooooooo
 #If (FnSwitch(0113)=1)
@@ -6310,28 +6371,263 @@ GetFile(hwnd="")
 
 GetFolder()
 {
-WinGetClass,var,A
-If var in CabinetWClass,ExplorerWClass,Progman
-{
-IfEqual,var,Progman
-	v := A_Desktop
-else
-{
-winGetText,Fullpath,A
-loop,parse,Fullpath,`r`n
-{
-IfInString,A_LoopField,:\
-{
-StringGetPos,pos,A_Loopfield,:\,L
-Stringtrimleft,v,A_loopfield,(pos - 1)
-break
-}
-}
-}
-return, v
-}
+	WinGetClass,var,A
+	If var in CabinetWClass,ExplorerWClass,Progman
+	{
+		IfEqual,var,Progman
+			v := A_Desktop
+		else
+		{
+			winGetText,Fullpath,A
+			loop,parse,Fullpath,`r`n
+			{
+			IfInString,A_LoopField,:\
+			{
+				StringGetPos,pos,A_Loopfield,:\,L
+				Stringtrimleft,v,A_loopfield,(pos - 1)
+				break
+			}
+		}
+		}
+		return, v
+	}
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;Clipjump end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ScreenCapture ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+makeScreenCaptureMenu:
+Menu, Tray, Add
+Menu, ScreenCapture, Add, 清空截图, clearpics 
+Menu, Tray, Add, 截屏, :ScreenCapture
+return
+;*=====================================================================================================================
+
+capture:
+gui, 18:destroy
+; make selected area gui
+gosub makeTransGui
+; esc 退出截图
+Hotkey,%SC_PrimaryHotkey%,captureFullScreen,On
+Hotkey ,Esc, escapeCapture, On
+isEscapeCapture := false
+; 创建目录
+IfNotExist, %SC_CaptureDir%
+	FileCreateDir, %SC_CaptureDir%
+
+; 时间文件名
+FormatTime, SC_TimeStamp, , yyyyMMdd_HHmmss
+SC_CaptureFileName = %SC_CaptureDir%\ScreenShot_%SC_TimeStamp%.%SC_CaptureExtension%
+; 要截取窗口的位置坐标
+SetTimer, Get_win_pos, 100
+return
+
+captureFullScreen:
+gosub escapeCapture
+SC_isright := true
+SC_isdown := true
+SysGet, SC_initialx, 76
+SysGet, SC_initialy, 77
+SysGet, SC_finalx, 78
+SysGet, SC_finaly, 79
+gosub save_screenshot
+Return
+
+Get_win_pos:
+; 获取光标下方窗口、控件位置
+	MouseGetPos, CaptureMouseX, CaptureMouseY, WhichWindow, WhichControl
+	WinGetPos, SC_winX, SC_winY, SC_winW, SC_winH,ahk_id %WhichWindow%
+    ControlGetPos, SC_controlX, SC_controlY, SC_controlW, SC_controlH, %WhichControl%, ahk_id %WhichWindow%
+	IfEqual ,WhichControl
+	{
+		gui, 19: show, x%SC_winX% y%SC_winY% h%SC_winH% w%SC_winW%
+		; ToolTip, %WhichWindow%`nX%SC_winX%`tY%SC_winY%`nW%SC_winW%`t%SC_winH%, CaptureMouseX+10, CaptureMouseY+10
+		ToolTip, %WhichWindow%`nX%SC_winX%`tY%SC_winY%`nW%SC_winW%`t%SC_winH%
+		SC_initialx := SC_winX
+		SC_initialy := SC_winY
+		SC_finalx := SC_initialx + SC_winW
+		SC_finaly := SC_initialy + SC_winH
+	}
+	else
+	{
+		; 控件坐标是相对窗口的
+		SC_controlX := SC_winX + SC_controlX
+		SC_controlY := SC_winY + SC_controlY
+		gui, 19: show, x%SC_controlX% y%SC_controlY% h%SC_controlH% w%SC_controlW%
+		; ToolTip, %WhichControl%`nX%SC_controlX%`tY%SC_controlY%`nW%SC_controlW%`t%SC_controlH%, CaptureMouseX+10, CaptureMouseY+10
+		ToolTip, %WhichControl%`nX%SC_controlX%`tY%SC_controlY%`nW%SC_controlW%`t%SC_controlH%
+		SC_initialx := SC_winX
+		SC_initialy := SC_winY
+		SC_finalx := SC_initialx + SC_winW
+		SC_finaly := SC_initialy + SC_winH
+	}
+
+	GetKeyState, SC_SecondaryHotkeyState,%SC_SecondaryHotkey%, P ;;获取%SC_SecondaryHotkey%状态判断是否按下,注意★这里使用获取方式P要比T稳定,如果使用T会导致无法全选很不稳定
+	; %SC_SecondaryHotkey%按下
+	if SC_SecondaryHotkeyState = D
+	{
+		SetTimer, Get_win_pos, off
+		; 鼠标初始位置
+		MouseGetPos,SC_initialx,SC_initialy
+		SetTimer,guimover,100
+		KeyWait,%SC_SecondaryHotkey%
+		sleep, 120																		;Should use 100, but just to be safe..!
+		SetTimer,guimover,off
+		; gui, 19:hide
+		gui, 19:destroy
+		tooltip
+		; 鼠标终位置
+		MouseGetPos,SC_finalx,SC_finaly
+	
+		if (!(isEscapeCapture))
+		{
+			gosub save_screenshot
+		}
+	}
+Return
+
+save_screenshot:
+; 截完图恢复原快捷键功能
+Hotkey,%SC_PrimaryHotkey%,captureFullScreen,Off
+Hotkey,%SC_PrimaryHotkey%,capture,On
+; 鼠标初始位置等于终止位置，即认为是单击事件，截取的是光标下的窗口或控件
+if SC_initialx = %SC_finalx%
+{
+	IfEqual ,WhichControl
+	{
+		SC_initialx := SC_winX
+		SC_initialy := SC_winY
+		SC_finalx := SC_initialx + SC_winW
+		SC_finaly := SC_initialy + SC_winH
+	}
+	else
+	{
+		SC_controlX := SC_winX + SC_controlX
+		SC_controlY := SC_winY + SC_controlY
+		SC_initialx := SC_controlX
+		SC_initialy := SC_controlY
+		SC_finalx := SC_initialx + SC_controlW
+		SC_finaly := SC_initialy + SC_controlH
+	}
+}
+; 鼠标初始位置不等于终止位置，即认为是鼠标拖拽事件，截取的是拖拽鼠标选中的区域
+else
+{
+	if (!(SC_isright)) {
+		SC_intmdx := SC_finalx
+		SC_finalx := SC_initialx
+		SC_initialx := SC_intmdx
+	}
+	if (!(SC_isdown))
+	{
+		SC_intmdy := SC_finaly
+		SC_finaly := SC_initialy
+		SC_initialy := SC_intmdy
+	}
+}
+
+CaptureScreen(SC_initialx, SC_initialy, SC_finalx, SC_finaly, (SC_finalx - SC_initialx), (SC_finaly - SC_initialy), False, SC_CaptureFileName, SC_qualityofpic)
+
+If (SC_actionafterfinish)
+{
+	gosub makeSelectActionGui
+	GuiControl, 18:,DirEdit,%SC_CaptureFileName%
+}
+EmptyMem()
+return
+
+escapeCapture:
+isEscapeCapture := true
+Hotkey ,Esc, escapeCapture, Off
+SetTimer, Get_win_pos, off
+SetTimer,guimover,off
+tooltip
+; gui, 19:hide
+gui, 19:destroy
+Return
+/*
+SUBS==========================================================================|
+*/
+
+guimover:
+MouseGetPos,tempx,tempy
+CaptureWidth := tempx - SC_initialx
+CaptureHeight := tempy - SC_initialy
+IfGreater,tempx,%SC_initialx%
+	SC_isright := true
+else
+	SC_isright := false
+IfGreater,tempy,%SC_initialy%
+	SC_isdown := true
+else
+	SC_isdown := false
+
+If !(SC_isright)
+	CaptureWidth := SC_initialx - tempx
+If !(SC_isdown)
+	CaptureHeight := SC_initialy - tempy
+
+;Anti-Movement Handling  :)
+if (!(SC_isright) and !(SC_isdown))
+	gui, 19:show, x%tempx% y%tempy% h%CaptureHeight% w%CaptureWidth%
+	else if (!(SC_isright))
+		gui, 19:show, x%tempx% y%SC_initialy% h%CaptureHeight% w%CaptureWidth%
+		else if (!(SC_isdown))
+			gui, 19:show, x%SC_initialx% y%tempy% h%CaptureHeight% w%CaptureWidth%
+			else
+				gui, 19:show, x%SC_initialx% y%SC_initialy% h%CaptureHeight% w%CaptureWidth%
+return
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+makeTransGui:
+CustomColor = EEAA99
+Gui, 19:Color, %SC_CaptureGuiColor%
+gui, 19:+Lastfound +AlwaysOnTop -Caption +ToolWindow
+WinSet, TransColor, %CustomColor% 50
+Return
+;
+makeSelectActionGui:
+Gui, 18:Add, Button, x452 y20 w70 h30 , SaveAs
+Gui, 18:Add, Button, x62 y60 w70 h30 , OpenDir
+Gui, 18:Add, Button, x202 y60 w70 h30 , Open
+Gui, 18:Add, Button, x332 y60 w70 h30 , Cancel
+gui, 18:Font, S10 CBlack, Verdana
+Gui, 18:Add, Edit, x32 y20 w400 h30 -Wrap -VScroll +ReadOnly vDirEdit,
+Gui, 18:Show, x321 y167 h115 w554, Select Action
+Return
+
+18ButtonSaveAs:
+FileSelectFile, SC_SaveFile, S, %SC_CaptureFileName%, Save As,JPEG(*.jpg)
+if SC_SaveFile =
+{
+}
+else
+{
+	GuiControl, 18:,DirEdit,%SC_SaveFile%
+	FileMove, %SC_CaptureFileName%, %SC_SaveFile%
+	SC_CaptureFileName = %SC_SaveFile%
+}
+Return
+
+18ButtonOpenDir:
+msgbox %SC_capturedirName%
+IfWinNotExist,%SC_capturedirName% ahk_class CabinetWClass
+	run Explorer /select`,%SC_CaptureFileName%
+else
+	WinActivate, %SC_capturedirName% ahk_class CabinetWClass
+Return
+
+18ButtonOpen:
+run, %SC_openCaptureSoft% %SC_CaptureFileName%
+Return
+
+18guiclose:
+18ButtonCancel:
+Gui, 18:destroy
+Return
+
+clearpics:
+filedelete %SC_CaptureDir%
+return
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ScreenCapture ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 f_ShowMenuX:
 Menu, THISISASECRETMENU, Show
 return

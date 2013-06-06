@@ -1,45 +1,21 @@
-﻿CaptureScreen(aRect = 0, bCursor = False, sFile = "", nQuality = "")
+;========================================FUNCTION=======================================
+/*
+ % -------------------------------------------------------------------------------------
+ %	Screen Capture with Transparent Windows and Mouse Cursor Function by SEAN
+ %
+ %	http://www.autohotkey.com/forum/topic18146.html
+ %
+ %  This is a modified form of the function.For original function, see above link.
+*/
+
+CaptureScreen(inix, iniy, finx, finy, rt5, rt6, bCursor = False, sFile = "", nQuality = "")
 {
-	If	!aRect
-	{
-		SysGet, nL, 76
-		SysGet, nT, 77
-		SysGet, nW, 78
-		SysGet, nH, 79
-	}
-	Else If	aRect = 1
-		WinGetPos, nL, nT, nW, nH, A
-	Else If	aRect = 2
-	{
-		WinGet, hWnd, ID, A
-		VarSetCapacity(rt, 16, 0)
-		DllCall("GetClientRect" , "Uint", hWnd, "Uint", &rt)
-		DllCall("ClientToScreen", "Uint", hWnd, "Uint", &rt)
-		nL := NumGet(rt, 0, "int")
-		nT := NumGet(rt, 4, "int")
-		nW := NumGet(rt, 8)
-		nH := NumGet(rt,12)
-	}
-	Else If	aRect = 3
-	{
-		VarSetCapacity(mi, 40, 0)
-		DllCall("GetCursorPos", "int64P", pt)
-		DllCall("GetMonitorInfo", "Uint", DllCall("MonitorFromPoint", "int64", pt, "Uint", 2), "Uint", NumPut(40,mi)-4)
-		nL := NumGet(mi, 4, "int")
-		nT := NumGet(mi, 8, "int")
-		nW := NumGet(mi,12, "int") - nL
-		nH := NumGet(mi,16, "int") - nT
-	}
-	Else
-	{
-		StringSplit, rt, aRect, `,, %A_Space%%A_Tab%
-		nL := rt1
-		nT := rt2
-		nW := rt3 - rt1
-		nH := rt4 - rt2
-		znW := rt5
-		znH := rt6
-	}
+	nL := inix
+	nT := iniy
+	nW := finx - inix
+	nH := finy - iniy
+	znW := rt5
+	znH := rt6
 
 	mDC := DllCall("CreateCompatibleDC", "Uint", 0)
 	hBM := CreateDIBSection_X(mDC, nW, nH)
@@ -53,9 +29,15 @@
 	DllCall("DeleteDC", "Uint", mDC)
 	If	znW && znH
 		hBM := Zoomer(hBM, nW, nH, znW, znH)
-	If	sFile = 0
-		SetClipboardData(hBM)
-	Else	Convert(hBM, sFile, nQuality), DllCall("DeleteObject", "Uint", hBM)
+	;howiefh
+	Convert(hBM, sFile, nQuality), 
+	SetClipboardData(hBM)
+	DllCall("DeleteObject", "Uint", hBM)
+	;origin
+	; If	sFile = 0
+		; SetClipboardData(hBM)
+	; Else	Convert(hBM, sFile, nQuality), DllCall("DeleteObject", "Uint", hBM)
+	;howiefh
 }
 
 CaptureCursor(hDC, nL, nT)
@@ -144,6 +126,7 @@ Convert(sFileFr = "", sFileTo = "", nQuality = "")
 			Break
 		}
 	}
+
 	If	pImage
 		pCodec	? DllCall("gdiplus\GdipSaveImageToFile", "Uint", pImage, "Uint", Unicode4Ansi(wFileTo,sFileTo), "Uint", pCodec, "Uint", pParam) : DllCall("gdiplus\GdipCreateHBITMAPFromBitmap", "Uint", pImage, "UintP", hBitmap, "Uint", 0) . SetClipboardData(hBitmap), DllCall("gdiplus\GdipDisposeImage", "Uint", pImage)
 

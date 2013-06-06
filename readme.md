@@ -25,7 +25,12 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
  </tr>
  <tr>
   <td>Win + N</td>
-  <td>新建文件夹（文件名为当前系统时间）</td>
+  <td>新建文件夹（文件夹名为当前系统时间）</td>
+  <td>118</td>
+ </tr>
+ <tr>
+  <td>Win + Alt + N</td>
+  <td>新建文件（文件名为当前系统时间）</td>
   <td>118</td>
  </tr>
  <tr>
