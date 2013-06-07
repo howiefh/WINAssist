@@ -6395,7 +6395,6 @@ GetFolder()
 ;;;;;;;;;;;;;;;;;;;;;;;;;;Clipjump end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ScreenCapture ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 makeScreenCaptureMenu:
-Menu, Tray, Add
 Menu, ScreenCapture, Add, Çå¿Õ½ØÍ¼, clearpics 
 Menu, Tray, Add, ½ØÆÁ, :ScreenCapture
 return
@@ -6624,7 +6623,13 @@ Gui, 18:destroy
 Return
 
 clearpics:
-filedelete %SC_CaptureDir%
+filedelete %SC_CaptureDir%\*.jpg
+if ErrorLevel != 0
+{
+	ToolTip, delete capture files failed
+	sleep 1000
+	ToolTip
+}
 return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ScreenCapture ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
