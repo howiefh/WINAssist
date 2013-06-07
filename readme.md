@@ -1,4 +1,4 @@
-WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀的AutoHotKey脚本，如：[HK4WIN](http://www.songruihua.com/hk4win.html)，[链接转换](http://ahk.5d6d.net/viewthread.php?tid=2025)，[screenlock ](http://www.appinn.com/Lock-Screen-Appinn/)，[HDDMonitor](http://www.autohotkey.com/board/topic/16501-hdd-activity-monitoring-led/)，[PCMeter](http://fures.hu/my_ahk_updates/PCMeter.ahk)，[KDE Style](http://www.autohotkey.com/docs/scripts/EasyWindowDrag_\(KDE\).htm)，[DesktopSwitch](http://myhotkey.googlecode.com/svn/trunk/bin/%E5%A4%9A%E5%B1%8F%E5%B9%95%E5%88%87%E6%8D%A2/)，[NiftyWindows](http://www.autohotkey.com/board/topic/2460-niftywindows/)，[ClipJump](http://avi-win-tips.blogspot.in/p/clipjump.html)等。在此谨向以上脚本的作者表示感谢！
+WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀的AutoHotKey脚本，如：[HK4WIN](http://www.songruihua.com/hk4win.html)，[链接转换](http://ahk.5d6d.net/viewthread.php?tid=2025)，[screenlock ](http://www.appinn.com/Lock-Screen-Appinn/)，[HDDMonitor](http://www.autohotkey.com/board/topic/16501-hdd-activity-monitoring-led/)，[PCMeter](http://fures.hu/my_ahk_updates/PCMeter.ahk)，[KDE Style](http://www.autohotkey.com/docs/scripts/EasyWindowDrag_\(KDE\).htm)，[DesktopSwitch](http://myhotkey.googlecode.com/svn/trunk/bin/%E5%A4%9A%E5%B1%8F%E5%B9%95%E5%88%87%E6%8D%A2/)，[NiftyWindows](http://www.autohotkey.com/board/topic/2460-niftywindows/)，[ClipJump](http://avi-win-tips.blogspot.in/p/clipjump.html)，[extremeclipper](http://avi-win-tips.blogspot.in/2013/05/extremeclipper.html)等。在此谨向以上脚本的作者表示感谢！
     
 本脚本实现的功能：
   
@@ -227,6 +227,16 @@ WINAssist是一个AutoHotKey脚本。脚本中功能模块参考了一些优秀�
   <td></td>
   <td>PCMeter开关</td>
   <td>566</td>
+ </tr>
+ <tr>
+  <td>单击PrintScreen</td>
+  <td>截图</td>
+  <td>567</td>
+ </tr>
+ <tr>
+  <td>双击PrintScreen</td>
+  <td>截取整个屏幕</td>
+  <td>567</td>
  </tr>
  <tr>
   <td>中键单击窗口</td>
