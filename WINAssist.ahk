@@ -6606,7 +6606,6 @@ else
 Return
 
 18ButtonOpenDir:
-msgbox %SC_capturedirName%
 IfWinNotExist,%SC_capturedirName% ahk_class CabinetWClass
 	run Explorer /select`,%SC_CaptureFileName%
 else

@@ -141,7 +141,7 @@ CreateDIBSection_X(hDC, nW, nH, bpp = 32, ByRef pBits = "")
 	NumPut(nH, bi, 8)
 	NumPut(bpp, NumPut(1, bi, 12, "UShort"), 0, "Ushort")
 	NumPut(0,  bi,16)
-	Return	DllCall("gdi32\CreateDIBSection_X", "Uint", hDC, "Uint", &bi, "Uint", 0, "UintP", pBits, "Uint", 0, "Uint", 0)
+	Return	DllCall("gdi32\CreateDIBSection", "Uint", hDC, "Uint", &bi, "Uint", 0, "UintP", pBits, "Uint", 0, "Uint", 0)
 }
 
 SaveHBITMAPToFile(hBitmap, sFile)
